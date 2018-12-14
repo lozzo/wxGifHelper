@@ -191,7 +191,7 @@ func (m *MsgStatus) isCmdAllowed(cmd string) ([]string, bool) {
 	for _, x := range allowedCmd {
 		b = b || (x == cmd)
 	}
-	return allowedCmd, b
+	return cmds2, b
 }
 
 // GetUserMsgStatus 获取用户发图状态
