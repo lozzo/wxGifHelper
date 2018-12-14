@@ -1,0 +1,48 @@
+package main
+
+//vlog 5 DEBUG
+import (
+	"flag"
+	"fmt"
+	"io/ioutil"
+	"net/url"
+	"tg_gif/bot"
+	"tg_gif/server"
+	"tg_gif/tools"
+
+	"github.com/golang/glog"
+	yaml "gopkg.in/yaml.v2"
+)
+
+// Conf 总配置文件
+type Conf struct {
+	Bot   *bot.Conf        `yaml:"bot"`
+	Redis *tools.RedisConf `yaml:"redis"`
+}
+
+func main() {
+	flag.Parse()
+	glog.V(5).Info("Under DEBUG Mode!!")
+	configFile, err := ioutil.ReadFile("conf.yaml")
+	if err != nil {
+		panic(fmt.Sprintf("读取文件错误: %s", err))
+	}
+	conf := new(Conf)
+	err = yaml.Unmarshal(configFile, &conf)
+	if err != nil {
+		panic(fmt.Sprintf("解析文件错误: %s", err))
+	}
+	glog.V(5).Info(fmt.Sprintf("%+v", conf.Redis))
+	bot.Init(conf.Bot)
+	url, err := url.Parse(conf.Bot.WebHookURL)
+	if err != nil {
+		panic(fmt.Sprintf("获取webHookURL错误: %s", err))
+	}
+	if len(url.Path) < 20 {
+		glog.Warningln("webHookURL 长度小于20")
+	}
+	tools.RedisPoolInit(conf.Redis)
+	tools.SetValue("121", "xxx", 3600)
+	server.Init(url.Path)
+	server.Run(":8889")
+}

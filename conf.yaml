@@ -1,0 +1,10 @@
+bot:
+  token:
+  webHookURL:
+redis:
+  server:
+  passwd:
+  db: 0
+  maxIdle: 50
+  maxActive: 300
+  idleTimeout: 2
