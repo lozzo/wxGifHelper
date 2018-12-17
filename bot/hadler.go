@@ -44,7 +44,7 @@ func (m *Msg) Handler() {
 		} else {
 			return
 		}
-	} else if m.Message.Sticker != nil {
+	} else if m.Message.Sticker != nil { // 当包含表情时的时候
 		if userMsgStatus.Cmd == "/start_send" || (userMsgStatus.Cmd == "/start_group" && userMsgStatus.Status == 1) {
 			file := GifORMp4{m.Message.Sticker.FileID, "Sticker"}
 			if userMsgStatus.File == nil {
@@ -61,8 +61,22 @@ func (m *Msg) Handler() {
 			SetUserMsgStatus(m.Message.From.ID, userMsgStatus)
 			SendText(m.Message, fmt.Sprintf("收到 %d 个表情", userMsgStatus.Count))
 			return
-		} else {
-			SendText(m.Message, "")
+		}
+		SendText(m.Message, "")
+
+	} else if m.Message.Sticker == nil && m.Message.Entities == nil { // 当只含有文字信息时
+		if userMsgStatus.Cmd == "/start_group" && userMsgStatus.Status == 0 { //此时等待用户输入表情包组名字，不能是空格
+			if m.Message.Text != "" {
+				userMsgStatus.Status = 1
+				userMsgStatus.GroupName = m.Message.Text
+				SetUserMsgStatus(m.Message.From.ID, userMsgStatus)
+				SendText(m.Message, fmt.Sprintf("当前表情包组名为： %s,请开始发送表情包，/stop_send 结束发送", m.Message.Text))
+				return
+			} else {
+				SendText(m.Message, "组名为空，请重新输入")
+				return
+			}
+			
 		}
 
 	}
