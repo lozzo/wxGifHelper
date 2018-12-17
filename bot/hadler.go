@@ -76,7 +76,7 @@ func (m *Msg) Handler() {
 				SendText(m.Message, "组名为空，请重新输入")
 				return
 			}
-			
+
 		}
 
 	}
@@ -179,14 +179,14 @@ func (m *MsgStatus) appendFile(g GifORMp4) {
 func (m *MsgStatus) isCmdAllowed(cmd string) ([]string, bool) {
 	a := false
 	allCmd := []string{"/start_send", "/start_group", "/bind_wx", "/un_bind_wx", "/stop_send"}
+	cmds1 := []string{"/stop_send"}
+	cmds2 := []string{"/start_send", "/start_group", "/bind_wx", "/un_bind_wx"}
 	for _, x := range allCmd {
 		a = a || (x == cmd)
 	}
 	if !a {
-		return allCmd, a
+		return cmds2, a
 	}
-	cmds1 := []string{"/stop_send"}
-	cmds2 := []string{"/start_send", "/start_group", "/bind_wx", "/un_bind_wx"}
 	var x = map[string][]string{
 		"/stop_send":   cmds2,
 		"/start_send":  cmds1,
