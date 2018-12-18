@@ -7,9 +7,11 @@ import (
 	"io/ioutil"
 	"net/url"
 	"tg_gif/bot"
+	"tg_gif/model"
 	"tg_gif/server"
 	"tg_gif/tools"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang/glog"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -25,6 +27,7 @@ type Conf struct {
 	Bot   *bot.Conf        `yaml:"bot"`
 	Redis *tools.RedisConf `yaml:"redis"`
 	WX    *wxConf          `yaml:"wx"`
+	DB    *model.SQLConf   `yaml:"DB"`
 }
 
 func main() {
@@ -49,7 +52,7 @@ func main() {
 		glog.Warningln("webHookURL 长度小于20")
 	}
 	tools.RedisPoolInit(conf.Redis)
-	tools.SetValue("121", "xxx", 3600)
+	model.DBInit(conf.DB)
 	server.Init(url.Path)
 	server.Run(":8889")
 }

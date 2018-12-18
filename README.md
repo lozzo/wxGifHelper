@@ -35,17 +35,18 @@
 
 ## 数据库结构
 
-- 文件数据库 FileID 主键
+- 文件数据库 ID 主键
+  - FileID ----> 文件 fileID
   - GroupID--->Group.ID
   - UserID--->User.UserID
 
-| FileID           | GroupID | UserID |
-| ---------------- | ------- | ------ |
-| d1jhkhd1U_D21SDH | 123     | 23123  |
+| ID  | FileID           | GroupID | UserID |
+| --- | ---------------- | ------- | ------ |
+| 12  | d1jhkhd1U_D21SDH | 123     | 23123  |
 
 - wxID 微信用户(wx 用户每次打开小程序的时候会查询用户名是否改变，如果改变则修改数据库？？？？)
 
-| UserID | openID                       | NickName |
+| ID | openID                       | NickName |
 | ------ | ---------------------------- | -------- |
 | 1223   | o2cb64in4yFf9YS-KMQcEYkiPtJ0 | lozzow   |
 

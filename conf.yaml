@@ -11,3 +11,8 @@ redis:
 wx:
   appid: wx9876b9977be5783f
   secret: 99e36f993df86b5032382fcd6b3c67e4
+DB:
+  DBUrl: root:passwd@tcp(10.0.0.72:3306)/dialect
+  maxIdleConns: 50
+  maxOpenConns: 300
+  connMaxLifetime: 20

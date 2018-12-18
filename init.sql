@@ -12,37 +12,38 @@ CREATE TABLE `gifs`
     `FileID` CHAR(40) NOT NULL,
     `UserID` INTEGER NOT NULL,
     PRIMARY KEY (`id`)
-)
+);
 
 CREATE TABLE `wxUsers`
 (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `openID` CHAR(40) NOT NULL,
     `nickName` CHAR(40) NOT NULL DEFAULT "",
-    PRIMARY KEY (`id`)
-)
+    PRIMARY KEY (`id`),
+    UNIQUE (`openID`)
+);
 
 CREATE TABLE `tgUsers`
 (
     `id` INTEGER NOT NULL,
     PRIMARY KEY (`id`)
-)
+);
 
 CREATE TABLE `users`
 (
-    `id` INTEGER NOT NULL,
-    `tgUserID` INTEGER NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `tgUserID` INTEGER NULL DEFAULT NULL,
     `wxUserID` INTEGER NULL DEFAULT NULL,
     PRIMARY KEY (`id`)
-)
+);
 
 
 CREATE TABLE `gifGroups`
 (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `groupName` CHAR(40) NOT NULL DEFAULT "",
+    `name` CHAR(40) NOT NULL DEFAULT "",
     PRIMARY KEY (`id`)
-)
+);
 
 ALTER TABLE `gifs` ADD FOREIGN KEY (GroupID) REFERENCES `gifGroups` (`id`);
 ALTER TABLE `gifs` ADD FOREIGN KEY (UserID) REFERENCES `users` (`id`);
@@ -50,6 +51,4 @@ ALTER TABLE `users` ADD FOREIGN KEY (tgUserID) REFERENCES `tgUsers` (`id`);
 ALTER TABLE `users` ADD FOREIGN KEY (wxUserID) REFERENCES `wxUsers` (`id`);
 
 
-
-
-
+INSERT INTO tgUsers (id) VALUES (1233);
