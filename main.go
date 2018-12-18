@@ -14,10 +14,17 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+//wx配置
+type wxConf struct {
+	AppID  string `yaml:"appid"`
+	Secret string `yaml:"secret"`
+}
+
 // Conf 总配置文件
 type Conf struct {
 	Bot   *bot.Conf        `yaml:"bot"`
 	Redis *tools.RedisConf `yaml:"redis"`
+	WX    *wxConf          `yaml:"wx"`
 }
 
 func main() {

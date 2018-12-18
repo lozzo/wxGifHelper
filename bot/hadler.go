@@ -1,5 +1,6 @@
 package bot
 
+// 处理消息的地方
 // 用一个状态机维护消息
 import (
 	"encoding/json"
@@ -41,9 +42,9 @@ func (m *Msg) Handler() {
 		if x[0].Type == "bot_command" {
 			commndHandler(m, userMsgStatus)
 			return
-		} else {
-			return
 		}
+		return
+
 	} else if m.Message.Sticker != nil { // 当包含表情时的时候
 		if userMsgStatus.Cmd == "/start_send" || (userMsgStatus.Cmd == "/start_group" && userMsgStatus.Status == 1) {
 			file := GifORMp4{m.Message.Sticker.FileID, "Sticker"}
@@ -72,10 +73,9 @@ func (m *Msg) Handler() {
 				SetUserMsgStatus(m.Message.From.ID, userMsgStatus)
 				SendText(m.Message, fmt.Sprintf("当前表情包组名为： %s,请开始发送表情包，/stop_send 结束发送", m.Message.Text))
 				return
-			} else {
-				SendText(m.Message, "组名为空，请重新输入")
-				return
 			}
+			SendText(m.Message, "组名为空，请重新输入")
+			return
 
 		}
 

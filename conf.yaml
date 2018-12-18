@@ -1,10 +1,13 @@
 bot:
-  token:
-  webHookURL:
+  token: 547660245:AAGxdiKzT6TBJm6dXYNrqIErltBYSImunck
+  webHookURL: https://tg.onemoresec.com/1231hkjha871rjahdSDEDKk1d12bhas
 redis:
-  server:
-  passwd:
+  server: 127.0.0.1:6379
+  passwd: HA2J2S31H23D1D@123k1j31a3s131d34k535jh12gh
   db: 0
   maxIdle: 50
   maxActive: 300
   idleTimeout: 2
+wx:
+  appid: wx9876b9977be5783f
+  secret: 99e36f993df86b5032382fcd6b3c67e4
