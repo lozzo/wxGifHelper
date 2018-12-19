@@ -137,9 +137,9 @@ func BindTg(w *WxUser, t *TgUser) error {
 	return nil
 }
 
-// UnBindTg 解绑TG
-func UnBindTg(t *TgUser) error {
-	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE tgUserID = ?`)
+// UnBindWx 解绑Wx
+func UnBindWx(t *TgUser) error {
+	stmt, err := db.Prepare(`UPDATE users SET wxUserId = NULL WHERE tgUserID = ?`)
 	if err != nil {
 		return err
 	}
@@ -152,9 +152,9 @@ func UnBindTg(t *TgUser) error {
 	return nil
 }
 
-// UnBindWx 解绑wx
-func UnBindWx(w *WxUser) error {
-	stmt, err := db.Prepare(`UPDATE users SET wxUserId = NULL WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
+// UnBindTg 解绑Tg
+func UnBindTg(w *WxUser) error {
+	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
 	if err != nil {
 		return err
 	}

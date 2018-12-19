@@ -47,7 +47,7 @@ func (m *Msg) Handler() {
 
 	} else if m.Message.Sticker != nil { // 当包含表情时的时候
 		if userMsgStatus.Cmd == "/start_send" || (userMsgStatus.Cmd == "/start_group" && userMsgStatus.Status == 1) {
-			file := GifORMp4{m.Message.Sticker.FileID, "Sticker"}
+			file := GifORMp4{m.Message.Sticker.FileID, "Sticker", ""}
 			if userMsgStatus.File == nil {
 				userMsgStatus.File = &[]GifORMp4{}
 			}
@@ -167,6 +167,7 @@ type MsgStatus struct {
 type GifORMp4 struct {
 	ID   string //FileID
 	Type string // gif or MP4
+	URL  string
 }
 
 func (m *MsgStatus) appendFile(g GifORMp4) {

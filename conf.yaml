@@ -16,3 +16,8 @@ DB:
   maxIdleConns: 50
   maxOpenConns: 300
   connMaxLifetime: 20
+oss:
+  Endpoint:
+  AccessKeyID:
+  AccessKeySecret:
+  BucketName:

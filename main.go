@@ -28,6 +28,7 @@ type Conf struct {
 	Redis *tools.RedisConf `yaml:"redis"`
 	WX    *wxConf          `yaml:"wx"`
 	DB    *model.SQLConf   `yaml:"DB"`
+	Oss   *tools.OssConf   `yaml:"oss"`
 }
 
 func main() {
