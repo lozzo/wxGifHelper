@@ -11,13 +11,18 @@ func AddFiles(gifs []Gifs) error {
 		glog.Error("数据库错误：", err)
 		return err
 	}
+	isGroup := false
+	groupID := 0
 	if gifs[0].Group != nil {
-		addGroup(gifs[0].Group.Name)
+		groupID, err = addGroup(gifs[0].Group.Name)
+		if err != nil {
+			return err
+		}
 	}
 	for _, gif := range gifs {
-		if gif.Group != nil {
+		if isGroup {
 			sql := "INSERT INTO gifs (GroupID,FileID,UserID) VALUES (?,?,?)"
-			_, err := tx.Exec(sql, gif.Group.ID, gif.File, gif.User.ID)
+			_, err := tx.Exec(sql, groupID, gif.File, gif.User.ID)
 			if err != nil {
 				tx.Rollback()
 				return err
@@ -40,6 +45,21 @@ func AddFiles(gifs []Gifs) error {
 	return nil
 }
 
-func addGroup(name string) {
-
+func addGroup(name string) (int, error) {
+	stmt, err := db.Prepare(`INSERT INTO tgUsers (id) VALUES (?)`)
+	if err != nil {
+		glog.Error("数据库错误:", err)
+		return 0, err
+	}
+	res, err := stmt.Exec(name)
+	if err != nil {
+		glog.Error("数据库错误:", err)
+		return 0, err
+	}
+	ID, err := res.LastInsertId()
+	if err != nil {
+		glog.Error("数据库错误:", err)
+		return 0, err
+	}
+	return int(ID), nil
 }
