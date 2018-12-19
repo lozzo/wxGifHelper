@@ -17,7 +17,7 @@ DB:
   maxOpenConns: 300
   connMaxLifetime: 20
 oss:
-  Endpoint:
-  AccessKeyID:
-  AccessKeySecret:
-  BucketName:
+  Endpoint: oss-cn-hangzhou.aliyuncs.com
+  AccessKeyID: LTAIOkYIOBY2Sc0i
+  AccessKeySecret: UnDeP2byfrZX5HGp0e8va5qzH5UkMg
+  BucketName: tg-gif
