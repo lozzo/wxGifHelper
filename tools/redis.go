@@ -97,7 +97,7 @@ func queueCount(queue string) (int, error) {
 	c := pool.Get()
 	defer c.Close()
 
-	lenqueue, err := c.Do("LLEN", "queue")
+	lenqueue, err := c.Do("LLEN", queue)
 	if err != nil {
 		return 0, err
 	}

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"tg_gif/common"
+	"tg_gif/model"
 	"tg_gif/tools"
 
 	"github.com/garyburd/redigo/redis"
@@ -15,7 +17,18 @@ import (
 )
 
 var (
-	helpStr        = "wxGifHelper 是一个帮助将Telegram表情包发送至微信的小工具，配合微信小程序使用，小程序扫描二维码，或者搜索小程序处{}即可添加小程序"
+	helpStr = `wxGifHelper 是一个帮助将Telegram表情包发送至微信的小工具，配合微信小程序使用，小程序扫描二维码，或者搜索小程序处{}即可添加小程序
+
+			可用命令包括以下：
+
+			/start_send  开始发送表情包
+			/start_group 开始发送带组信息的表情包
+			/stop_send   结束发送/start_send或者/start_group状态结束发送后台才才会开始下载表情包并上传到oss，小程序内更新可能会有一定延迟 
+			/bind_wx     绑定微信帐号，也可以在微信程序内绑定TG帐号
+			/un_bind_wx  解除TG帐号和微信帐号的绑定，不影响程序使用
+			
+			希望使用开心
+			`
 	bindWxStr      = "绑定微信,请在微信小程序设置页面绑定：%d ID,扫描二维码或者搜索小程序:wxGifHelper"
 	bindWxErrStr   = "你已绑定微信，微信昵称：%s，请勿重复绑定，或者解除绑定后重新绑定"
 	unbindWxStr    = "当前绑定微信昵称：%s，解除微信绑定后，你亦可以用自己的电报ID: %d 来查找已上传的表情"
@@ -37,6 +50,7 @@ type Msg struct {
 // Handler 数据处理
 func (m *Msg) Handler() {
 	userMsgStatus := GetUserMsgStatus(m.Message.From.ID)
+	userMsgStatus.ID = m.Message.From.ID
 	if m.Message.Entities != nil {
 		x := *m.Message.Entities
 		if x[0].Type == "bot_command" {
@@ -47,9 +61,18 @@ func (m *Msg) Handler() {
 
 	} else if m.Message.Sticker != nil { // 当包含表情时的时候
 		if userMsgStatus.Cmd == "/start_send" || (userMsgStatus.Cmd == "/start_group" && userMsgStatus.Status == 1) {
-			file := GifORMp4{m.Message.Sticker.FileID, "Sticker"}
+			FileID := m.Message.Sticker.FileID
+			x := tgbotapi.FileConfig{FileID: FileID}
+			f, err := BotAPI.GetFile(x)
+			if err != nil {
+				remsg := tgbotapi.NewMessage(m.Message.Chat.ID, "本次表情发送失败，请重新发送")
+				remsg.ReplyToMessageID = m.Message.MessageID
+				BotAPI.Send(remsg)
+			}
+			fileURL := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", BotAPI.Token, f.FilePath)
+			file := common.GifORMp4{m.Message.Sticker.FileID, "Sticker", fileURL}
 			if userMsgStatus.File == nil {
-				userMsgStatus.File = &[]GifORMp4{}
+				userMsgStatus.File = &[]common.GifORMp4{}
 			}
 			for _, exFile := range *userMsgStatus.File {
 				if file.ID == exFile.ID {
@@ -83,14 +106,19 @@ func (m *Msg) Handler() {
 }
 
 // 只是针对命令行的处理函数
-func commndHandler(m *Msg, userMsgStatus *MsgStatus) {
+func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 	command := m.Message.Text
-	data, ok := userMsgStatus.isCmdAllowed(command)
+	data, ok := userMsgStatus.IsCmdAllowed(command)
 	if !ok {
 		SendText(m.Message, fmt.Sprintf(commandErrStr, command, data))
 		return
 	}
 	switch command {
+	case "/start":
+		SendText(m.Message, helpStr)
+		tUser := model.TgUser{ID: m.Message.From.ID}
+		user := model.User{TgUser: &tUser}
+		model.AddUser(user)
 	case "/bind_wx":
 		name, ok := isBindWx(m.Message.From.ID)
 		if ok {
@@ -148,69 +176,9 @@ func commndHandler(m *Msg, userMsgStatus *MsgStatus) {
 	}
 }
 
-// ALL 不同的用户有各自的状态。存在redis，避免自己写过期设置，
-// 开始发送表情之后1小时都可以继续发送，超过一小时，删除发送状态，每次发图重新计算时间
-// redis json 数据格式类型如下，每次更新重写设置时间
-// var ALL = make(map[string]MsgStatus)
-
-// MsgStatus 当前消息状态
-type MsgStatus struct {
-	Cmd       string      // 当前命令
-	Count     int         // 图片数量
-	File      *[]GifORMp4 // 文件列表
-	IsGroup   bool        // 是否为一组文件
-	Status    int         // 0 ：未开始存图。1：正在存图，2：结束存图 主要用在group时命名等待
-	GroupName string
-}
-
-// GifORMp4 动图或者mp4
-type GifORMp4 struct {
-	ID   string //FileID
-	Type string // gif or MP4
-}
-
-func (m *MsgStatus) appendFile(g GifORMp4) {
-	if m.Status != 2 {
-		*m.File = append(*m.File, g)
-	}
-}
-
-// 状态判断写的真垃圾啊，要重写要重写，要上状态机！！！
-func (m *MsgStatus) isCmdAllowed(cmd string) ([]string, bool) {
-	a := false
-	allCmd := []string{"/start_send", "/start_group", "/bind_wx", "/un_bind_wx", "/stop_send"}
-	cmds1 := []string{"/stop_send"}
-	cmds2 := []string{"/start_send", "/start_group", "/bind_wx", "/un_bind_wx"}
-	for _, x := range allCmd {
-		a = a || (x == cmd)
-	}
-	if !a {
-		return cmds2, a
-	}
-	var x = map[string][]string{
-		"/stop_send":   cmds2,
-		"/start_send":  cmds1,
-		"/start_group": cmds1,
-		"/bind_wx":     cmds1,
-		"/un_bind_wx":  cmds1,
-	}
-	if m.Cmd == "" {
-		if cmd == "/stop_send" {
-			return cmds2, false
-		}
-		return cmds2, true
-	}
-	allowedCmd := x[m.Cmd]
-	b := false
-	for _, x := range allowedCmd {
-		b = b || (x == cmd)
-	}
-	return cmds2, b
-}
-
 // GetUserMsgStatus 获取用户发图状态
-func GetUserMsgStatus(id int) *MsgStatus {
-	m := &MsgStatus{}
+func GetUserMsgStatus(id int) *common.MsgStatus {
+	m := &common.MsgStatus{}
 	idString := strconv.Itoa(id)
 	r, err := tools.GetByteValue(idString)
 	if err == redis.ErrNil {
@@ -222,16 +190,14 @@ func GetUserMsgStatus(id int) *MsgStatus {
 	}
 
 	if json.Unmarshal(r, m) != nil {
-		fmt.Println(r, *m)
 		glog.Error("解析数据错误", err)
 		return nil
 	}
-	fmt.Printf("%+v", m)
 	return m
 }
 
 // SetUserMsgStatus 设置用户状态
-func SetUserMsgStatus(id int, m *MsgStatus) error {
+func SetUserMsgStatus(id int, m *common.MsgStatus) error {
 	idString := strconv.Itoa(id)
 	x, err := json.Marshal(m)
 	if err != nil {

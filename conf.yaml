@@ -12,7 +12,12 @@ wx:
   appid: wx9876b9977be5783f
   secret: 99e36f993df86b5032382fcd6b3c67e4
 DB:
-  DBUrl: root:passwd@tcp(10.0.0.72:3306)/dialect
+  DBUrl: tg_gif:lYmYwIGUzOGEgOTBkZCBjNGRlIDNk@tcp(172.17.0.1:3306)/tg_gif
   maxIdleConns: 50
   maxOpenConns: 300
   connMaxLifetime: 20
+oss:
+  Endpoint: oss-cn-hangzhou.aliyuncs.com
+  AccessKeyID: LTAIOkYIOBY2Sc0i
+  AccessKeySecret: UnDeP2byfrZX5HGp0e8va5qzH5UkMg
+  BucketName: tg-gif

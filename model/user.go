@@ -26,13 +26,14 @@ func newUserFromTg(t *TgUser) error {
 	if err != nil {
 		return err
 	}
-	stmt2, err := db.Prepare(`INSERT INTO users (tgUserID) VALUES (?)`)
+	stmt2, err := db.Prepare(`INSERT  INTO users (tgUserID) SELECT (?) FROM DUAL WHERE NOT EXISTS (SELECT tgUserID FROM users WHERE tgUserID= ? )`)
+	// INSERT  INTO users (tgUserID) SELECT (?) FROM DUAL WHERE NOT EXISTS (SELECT tgUserID FROM users WHERE tgUserID= ? )
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return err
 	}
 	defer stmt2.Close()
-	_, err = stmt2.Exec(t.ID)
+	_, err = stmt2.Exec(t.ID, t.ID)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return err
@@ -63,13 +64,13 @@ func newUserFromWx(w *WxUser) error {
 
 //添加新的Telegram用户
 func newTgUser(t *TgUser) (int64, error) {
-	stmt, err := db.Prepare(`INSERT INTO tgUsers (id) VALUES (?)`)
+	stmt, err := db.Prepare(`INSERT  INTO tgUsers (id) SELECT (?) FROM DUAL WHERE NOT EXISTS (SELECT id FROM tgUsers WHERE id= ? )`)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(t.ID)
+	_, err = stmt.Exec(t.ID, t.ID)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err
@@ -79,13 +80,14 @@ func newTgUser(t *TgUser) (int64, error) {
 
 // 添加新的Wx用户
 func newWxUser(w *WxUser) (int64, error) {
-	stmt, err := db.Prepare(`INSERT INTO wxUsers (openID,nickName) VALUES (?,?)`)
+	// stmt, err := db.Prepare(`INSERT INTO wxUsers (openID,nickName) VALUES (?,?)`)
+	stmt, err := db.Prepare(`INSERT INTO wxUsers (openID,nickName) SELECT (?,?) FROM DUAL WHERE NOT EXISTS (SELECT openID FROM wxUsers WHERE openID= ? ) `)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(w.openID, w.NickName)
+	res, err := stmt.Exec(w.openID, w.NickName, w.openID)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err
@@ -137,9 +139,9 @@ func BindTg(w *WxUser, t *TgUser) error {
 	return nil
 }
 
-// UnBindTg 解绑TG
-func UnBindTg(t *TgUser) error {
-	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE tgUserID = ?`)
+// UnBindWx 解绑Wx
+func UnBindWx(t *TgUser) error {
+	stmt, err := db.Prepare(`UPDATE users SET wxUserId = NULL WHERE tgUserID = ?`)
 	if err != nil {
 		return err
 	}
@@ -152,9 +154,9 @@ func UnBindTg(t *TgUser) error {
 	return nil
 }
 
-// UnBindWx 解绑wx
-func UnBindWx(w *WxUser) error {
-	stmt, err := db.Prepare(`UPDATE users SET wxUserId = NULL WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
+// UnBindTg 解绑Tg
+func UnBindTg(w *WxUser) error {
+	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
 	if err != nil {
 		return err
 	}
@@ -169,8 +171,8 @@ func UnBindWx(w *WxUser) error {
 
 // IsBindWx 在tg内查看是否绑定wx,如果绑定则返回用户名，wx用户名不能是空字符串
 func IsBindWx(t *TgUser) (string, error) {
-	var u User
-	err := db.QueryRow("SELECT nickName FROM wxUsers WHERE id = (SELECT wxUserID FROM users WHERE tgUserID = ? LIMIT 1) LIMIT 1 ", t.ID).Scan(&u.WxUser.NickName)
+	var u string
+	err := db.QueryRow("SELECT nickName FROM wxUsers WHERE id = (SELECT wxUserID FROM users WHERE tgUserID = ? LIMIT 1) LIMIT 1 ", t.ID).Scan(&u)
 	if err == sql.ErrNoRows {
 		glog.V(2).Info(fmt.Sprintf("TG ID:%d 尚未绑定wx帐号", t.ID))
 		return "", nil //这个时候是没有绑定
@@ -179,7 +181,7 @@ func IsBindWx(t *TgUser) (string, error) {
 		glog.Error("数据库错误：", err)
 		return "", err //出现错误
 	}
-	return u.WxUser.NickName, nil
+	return u, nil
 }
 
 // IsBindTg 在wx小程序内查产是否绑定tg帐号

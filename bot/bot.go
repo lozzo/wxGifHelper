@@ -32,12 +32,13 @@ func Init(c *Conf) {
 	glog.V(5).Info(fmt.Sprintf("%s", string(res.Result)))
 	me, _ := BotAPI.GetMe()
 	glog.V(5).Info(fmt.Sprintf("%+v", me))
+	go RUNDOW()
 }
 
 // SendText 给指定ID发送文字信息封装
 func SendText(msg *tgbotapi.Message, text string) {
 	remsg := tgbotapi.NewMessage(msg.Chat.ID, text)
-	// remsg.ReplyToMessageID = msg.MessageID
+	remsg.ReplyToMessageID = msg.MessageID
 	BotAPI.Send(remsg)
 }
 
