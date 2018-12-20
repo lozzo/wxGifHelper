@@ -44,7 +44,7 @@ func main() {
 		panic(fmt.Sprintf("解析文件错误: %s", err))
 	}
 	glog.V(5).Info(fmt.Sprintf("%+v", conf.Redis))
-	bot.Init(conf.Bot)
+
 	url, err := url.Parse(conf.Bot.WebHookURL)
 	if err != nil {
 		panic(fmt.Sprintf("获取webHookURL错误: %s", err))
@@ -52,8 +52,10 @@ func main() {
 	if len(url.Path) < 20 {
 		glog.Warningln("webHookURL 长度小于20")
 	}
+	tools.OssInit(conf.Oss)
 	tools.RedisPoolInit(conf.Redis)
 	model.DBInit(conf.DB)
+	bot.Init(conf.Bot)
 	server.Init(url.Path)
 	server.Run(":8889")
 }

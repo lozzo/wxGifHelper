@@ -26,13 +26,14 @@ func newUserFromTg(t *TgUser) error {
 	if err != nil {
 		return err
 	}
-	stmt2, err := db.Prepare(`INSERT INTO users (tgUserID) VALUES (?)`)
+	stmt2, err := db.Prepare(`INSERT  INTO users (tgUserID) SELECT (?) FROM DUAL WHERE NOT EXISTS (SELECT tgUserID FROM users WHERE tgUserID= ? )`)
+	// INSERT  INTO users (tgUserID) SELECT (?) FROM DUAL WHERE NOT EXISTS (SELECT tgUserID FROM users WHERE tgUserID= ? )
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return err
 	}
 	defer stmt2.Close()
-	_, err = stmt2.Exec(t.ID)
+	_, err = stmt2.Exec(t.ID, t.ID)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return err

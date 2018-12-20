@@ -2,7 +2,7 @@ package tools
 
 import (
 	"net/http"
-	"sync"
+	"tg_gif/common"
 	"time"
 
 	"github.com/golang/glog"
@@ -16,13 +16,12 @@ var (
 	//HTTPClient HTTPClient
 	HTTPClient *http.Client //http.Client 是全局对象，注意设置超时时间问题
 	ossClinet  *oss.Client
-	wg         sync.WaitGroup
 	bucketName string
 )
 
 const (
-	maxIdleConnections = 20
-	requestTimeout     = 60
+	maxIdleConnections = 100
+	requestTimeout     = 120
 )
 
 // createHTTPClient for connection re-use
@@ -38,14 +37,14 @@ func createHTTPClient() *http.Client {
 
 // OssConf oss配置文档
 type OssConf struct {
-	Endpoint        string
-	AccessKeyID     string
-	AccessKeySecret string
-	BucketName      string
+	Endpoint        string `yaml:"Endpoint"`
+	AccessKeyID     string `yaml:"AccessKeyID"`
+	AccessKeySecret string `yaml:"AccessKeySecret"`
+	BucketName      string `yaml:"BucketName"`
 }
 
-// Init oss 服务初始化
-func Init(o *OssConf) {
+// OssInit oss 服务初始化
+func OssInit(o *OssConf) {
 	var err error
 	ossClinet, err = oss.New(o.Endpoint, o.AccessKeyID, o.AccessKeySecret)
 	if err != nil {
@@ -59,14 +58,8 @@ func Init(o *OssConf) {
 
 }
 
-// FileWithURL 网络文件
-type FileWithURL struct {
-	URL  string
-	Name string
-}
-
 // DowAndUploadToOss 网络文件下载然后传到oss,count 控制并发数量
-func DowAndUploadToOss(files []*FileWithURL, count int) {
+func DowAndUploadToOss(files []*common.FileWithURL, count int) {
 	goroutineCount := make(chan int, count)
 	for i, file := range files {
 		goroutineCount <- i
@@ -75,7 +68,7 @@ func DowAndUploadToOss(files []*FileWithURL, count int) {
 
 }
 
-func dowAndUploadToOss(f *FileWithURL, c chan int) {
+func dowAndUploadToOss(f *common.FileWithURL, c chan int) {
 	resp, err := HTTPClient.Get(f.URL)
 	if err != nil {
 		glog.Error("请求错误", err)
