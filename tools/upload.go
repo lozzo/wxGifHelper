@@ -1,10 +1,11 @@
 package tools
 
 import (
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/golang/glog"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 )
@@ -12,7 +13,8 @@ import (
 //upload.go 文件上传oss服务
 
 var (
-	httpClient *http.Client //http.Client 是全局对象，注意设置超时时间问题
+	//HTTPClient HTTPClient
+	HTTPClient *http.Client //http.Client 是全局对象，注意设置超时时间问题
 	ossClinet  *oss.Client
 	wg         sync.WaitGroup
 	bucketName string
@@ -53,7 +55,7 @@ func Init(o *OssConf) {
 		panic("oss服务启动失败")
 	}
 	bucketName = o.BucketName
-	httpClient = createHTTPClient()
+	HTTPClient = createHTTPClient()
 
 }
 
@@ -74,21 +76,21 @@ func DowAndUploadToOss(files []*FileWithURL, count int) {
 }
 
 func dowAndUploadToOss(f *FileWithURL, c chan int) {
-	resp, err := httpClient.Get(f.URL)
+	resp, err := HTTPClient.Get(f.URL)
 	if err != nil {
-		fmt.Println("请求错误：", err)
+		glog.Error("请求错误", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	bucket, err := ossClinet.Bucket(bucketName)
 	if err != nil {
-		fmt.Println("bucket创建失败“：", err)
+		glog.Error("bucket创建失败“：", err)
 		return
 	}
 	err = bucket.PutObject(f.Name, resp.Body)
 	if err != nil {
-		fmt.Println("上传错误：", err)
+		glog.Error("上传错误：", err)
 		return
 	}
 	<-c

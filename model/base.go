@@ -2,8 +2,9 @@ package model
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 //DB 全局的 数据库链接
@@ -55,12 +56,12 @@ func DBInit(c *SQLConf) {
 	var err error
 	db, err = sql.Open("mysql", c.DBUrl)
 	if err != nil {
-		fmt.Println(err)
+		glog.Error(err)
 		panic("error while init sql")
 	}
 	err = db.Ping()
 	if err != nil {
-		fmt.Println(err)
+		glog.Error(err)
 		panic("error while init sql")
 	}
 	db.SetMaxIdleConns(c.MaxIdleConns)

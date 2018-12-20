@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"tg_gif/model"
 	"tg_gif/tools"
 
 	"github.com/garyburd/redigo/redis"
@@ -15,7 +16,18 @@ import (
 )
 
 var (
-	helpStr        = "wxGifHelper 是一个帮助将Telegram表情包发送至微信的小工具，配合微信小程序使用，小程序扫描二维码，或者搜索小程序处{}即可添加小程序"
+	helpStr = `wxGifHelper 是一个帮助将Telegram表情包发送至微信的小工具，配合微信小程序使用，小程序扫描二维码，或者搜索小程序处{}即可添加小程序
+
+			可用命令包括以下：
+
+			/start_send  开始发送表情包
+			/start_group 开始发送带组信息的表情包
+			/stop_send   结束发送/start_send或者/start_group状态结束发送后台才才会开始下载表情包并上传到oss，小程序内更新可能会有一定延迟 
+			/bind_wx     绑定微信帐号，也可以在微信程序内绑定TG帐号
+			/un_bind_wx  解除TG帐号和微信帐号的绑定，不影响程序使用
+			
+			希望使用开心
+			`
 	bindWxStr      = "绑定微信,请在微信小程序设置页面绑定：%d ID,扫描二维码或者搜索小程序:wxGifHelper"
 	bindWxErrStr   = "你已绑定微信，微信昵称：%s，请勿重复绑定，或者解除绑定后重新绑定"
 	unbindWxStr    = "当前绑定微信昵称：%s，解除微信绑定后，你亦可以用自己的电报ID: %d 来查找已上传的表情"
@@ -47,7 +59,16 @@ func (m *Msg) Handler() {
 
 	} else if m.Message.Sticker != nil { // 当包含表情时的时候
 		if userMsgStatus.Cmd == "/start_send" || (userMsgStatus.Cmd == "/start_group" && userMsgStatus.Status == 1) {
-			file := GifORMp4{m.Message.Sticker.FileID, "Sticker", ""}
+			FileID := m.Message.Sticker.FileID
+			x := tgbotapi.FileConfig{FileID: FileID}
+			f, err := BotAPI.GetFile(x)
+			if err != nil {
+				remsg := tgbotapi.NewMessage(m.Message.Chat.ID, "本次表情发送失败，请重新发送")
+				remsg.ReplyToMessageID = m.Message.MessageID
+				BotAPI.Send(remsg)
+			}
+			fileURL := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", BotAPI.Token, f.FilePath)
+			file := GifORMp4{m.Message.Sticker.FileID, "Sticker", fileURL}
 			if userMsgStatus.File == nil {
 				userMsgStatus.File = &[]GifORMp4{}
 			}
@@ -91,6 +112,11 @@ func commndHandler(m *Msg, userMsgStatus *MsgStatus) {
 		return
 	}
 	switch command {
+	case "/start":
+		SendText(m.Message, helpStr)
+		tUser := model.TgUser{ID: m.Message.From.ID}
+		user := model.User{TgUser: &tUser}
+		model.AddUser(user)
 	case "/bind_wx":
 		name, ok := isBindWx(m.Message.From.ID)
 		if ok {
@@ -182,6 +208,9 @@ func (m *MsgStatus) isCmdAllowed(cmd string) ([]string, bool) {
 	allCmd := []string{"/start_send", "/start_group", "/bind_wx", "/un_bind_wx", "/stop_send"}
 	cmds1 := []string{"/stop_send"}
 	cmds2 := []string{"/start_send", "/start_group", "/bind_wx", "/un_bind_wx"}
+	if cmd == "/start" {
+		return cmds2, true
+	}
 	for _, x := range allCmd {
 		a = a || (x == cmd)
 	}
@@ -223,11 +252,9 @@ func GetUserMsgStatus(id int) *MsgStatus {
 	}
 
 	if json.Unmarshal(r, m) != nil {
-		fmt.Println(r, *m)
 		glog.Error("解析数据错误", err)
 		return nil
 	}
-	fmt.Printf("%+v", m)
 	return m
 }
 
