@@ -22,9 +22,9 @@ var (
 )
 
 // WxInit 引入appid和secret
-func WxInit(appid, secret string) {
-	appid = appid
-	secret = secret
+func WxInit(gappid, gsecret string) {
+	appid = gappid
+	secret = gsecret
 }
 
 //CreatToken 生成jwttoken
@@ -102,22 +102,28 @@ type getOpenID struct {
 // GetWxOpenID 获取微信openid
 func GetWxOpenID(jscode string) (string, error) {
 	URL := fmt.Sprintf("https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code", appid, secret, jscode)
+	glog.V(5).Info(URL)
 	openid := getOpenID{}
 	resp, err := http.Get(URL)
 	if err != nil {
+		glog.V(5).Info(err)
 		return "", err
 	}
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
+	glog.V(5).Info(string(data))
 	if err != nil {
+		glog.V(5).Info(err)
 		return "", err
 	}
 
 	err = json.Unmarshal(data, &openid)
 	if err != nil {
+		glog.V(5).Info(err)
 		return "", err
 	}
 	if openid.OpenID == "" {
+		glog.V(5).Info("xxxxxxx")
 		return "", errors.New("blank opeid")
 	}
 	return openid.OpenID, nil

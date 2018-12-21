@@ -5,6 +5,7 @@ import (
 	"tg_gif/model"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang/glog"
 )
 
 // 可以单独独立出来的服务，先放这儿吧
@@ -14,6 +15,7 @@ import (
 func Login(c *gin.Context) {
 	jscode := c.DefaultQuery("jscode", "")
 	nickName := c.DefaultQuery("nickName", "")
+	glog.V(5).Info(jscode, nickName)
 	if jscode == "" {
 		c.AbortWithStatus(401)
 		return

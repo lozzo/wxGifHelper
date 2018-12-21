@@ -11,6 +11,7 @@ import (
 func NewUserFromWx(w *WxUser) (int, error) {
 	userID, err := newWxUser(w)
 	if err != nil {
+		glog.V(5).Info(err)
 		return 0, err
 	}
 	stmt2, err := db.Prepare(`INSERT INTO users (wxUserID) VALUES (?)`)
@@ -51,7 +52,7 @@ func NewTgUser(tID int) (int64, error) {
 // 添加新的Wx用户
 func newWxUser(w *WxUser) (int64, error) {
 	// stmt, err := db.Prepare(`INSERT INTO wxUsers (openID,nickName) VALUES (?,?)`)
-	stmt, err := db.Prepare(`INSERT INTO wxUsers (openID,nickName) SELECT (?,?) FROM DUAL WHERE NOT EXISTS (SELECT openID FROM wxUsers WHERE openID= ? ) `)
+	stmt, err := db.Prepare(`INSERT INTO wxUsers (openID,nickName) SELECT (?,?) FROM DUAL WHERE NOT EXISTS (SELECT openID FROM wxUsers WHERE openID= ? LIMIT 1 ) `)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err
@@ -148,9 +149,10 @@ func IsBindTg(openid string) (int, error) {
 // GetUserIDByWx 从wx后去用户ID，如果用户不存在，则新建用户
 func GetUserIDByWx(openID, nickName string) int {
 	var uID int
-	SQL := "SELECT id FROM users WHERE wxUserID=(SELECT id FORM wxUsers WHERE openID = ? LIMIT 1)"
-	err := db.QueryRow(SQL, openID).Scan(&uID)
+	SQL := "SELECT id FROM users WHERE wxUserID=(SELECT id FROM wxUsers WHERE openID = ? LIMIT 1)"
+	err := db.QueryRow(SQL, openID).Scan(uID)
 	if err == sql.ErrNoRows {
+		glog.V(5).Info("没有用户，需要新建")
 		w := WxUser{
 			openID:   openID,
 			NickName: nickName,
@@ -160,7 +162,10 @@ func GetUserIDByWx(openID, nickName string) int {
 			return 0
 		}
 		return id
-	} else {
-		return uID
+	} else if err != nil {
+		glog.V(5).Info(err)
 	}
+	glog.V(5).Info("uid:", uID)
+	return uID
+
 }
