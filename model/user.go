@@ -12,31 +12,11 @@ import (
 // AddUser 添加用户，新用户，来源可能是wx，也可能是tg
 func AddUser(u User) error {
 	if u.TgUser != nil && u.WxUser == nil {
-		return newUserFromTg(u.TgUser)
+		_, err := newTgUser(u.TgUser)
+		return err
 	}
 	if u.TgUser == nil && u.WxUser != nil {
 		return newUserFromWx(u.WxUser)
-	}
-	return nil
-}
-
-// 新用户来自Telegram
-func newUserFromTg(t *TgUser) error {
-	_, err := newTgUser(t)
-	if err != nil {
-		return err
-	}
-	stmt2, err := db.Prepare(`INSERT  INTO users (tgUserID) SELECT (?) FROM DUAL WHERE NOT EXISTS (SELECT tgUserID FROM users WHERE tgUserID= ? )`)
-	// INSERT  INTO users (tgUserID) SELECT (?) FROM DUAL WHERE NOT EXISTS (SELECT tgUserID FROM users WHERE tgUserID= ? )
-	if err != nil {
-		glog.Error("数据库错误：", err)
-		return err
-	}
-	defer stmt2.Close()
-	_, err = stmt2.Exec(t.ID, t.ID)
-	if err != nil {
-		glog.Error("数据库错误：", err)
-		return err
 	}
 	return nil
 }
@@ -100,26 +80,6 @@ func newWxUser(w *WxUser) (int64, error) {
 	return userID, nil
 }
 
-// BindWx 已有用户绑定新wx
-func BindWx(t *TgUser, w *WxUser) error {
-	UserID, err := newWxUser(w)
-	if err != nil {
-		return err
-	}
-	stmt, err := db.Prepare(`UPDATE users SET wxUserID = ? WHERE tgUserID =?`)
-	if err != nil {
-		glog.Error("数据库错误：", err)
-		return err
-	}
-	defer stmt.Close()
-	_, err = stmt.Exec(UserID, t.ID)
-	if err != nil {
-		glog.Error("数据库错误：", err)
-		return err
-	}
-	return nil
-}
-
 // BindTg 已有用户绑定新Tg
 func BindTg(w *WxUser, t *TgUser) error {
 	_, err := newTgUser(t)
@@ -139,9 +99,9 @@ func BindTg(w *WxUser, t *TgUser) error {
 	return nil
 }
 
-// UnBindWx 解绑Wx
-func UnBindWx(t *TgUser) error {
-	stmt, err := db.Prepare(`UPDATE users SET wxUserId = NULL WHERE tgUserID = ?`)
+// UnBindWxFromTg 解绑Wx
+func UnBindWxFromTg(t *TgUser) error {
+	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE tgUserID = ?`)
 	if err != nil {
 		return err
 	}
@@ -154,8 +114,8 @@ func UnBindWx(t *TgUser) error {
 	return nil
 }
 
-// UnBindTg 解绑Tg
-func UnBindTg(w *WxUser) error {
+// UnBindTgFromWX 解绑Tg
+func UnBindTgFromWX(w *WxUser) error {
 	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
 	if err != nil {
 		return err

@@ -18,6 +18,7 @@ import (
 
 var (
 	helpStr = `wxGifHelper 是一个帮助将Telegram表情包发送至微信的小工具，配合微信小程序使用，小程序扫描二维码，或者搜索小程序处{}即可添加小程序
+			需要绑定微信号才能使用，绑定后即可使用以下命令，你的绑定号是%d
 
 			可用命令包括以下：
 
@@ -25,20 +26,20 @@ var (
 			/start_group 开始发送带组信息的表情包
 			/stop_send   结束发送/start_send或者/start_group状态结束发送后台才才会开始下载表情包并上传到oss，小程序内更新可能会有一定延迟 
 			/bind_wx     绑定微信帐号，也可以在微信程序内绑定TG帐号
-			/un_bind_wx  解除TG帐号和微信帐号的绑定，不影响程序使用
+			/un_bind_wx  解除TG帐号和微信帐号的绑定，解除绑定后已上传的表情依然可以在小程序查看
 			
 			希望使用开心
 			`
 	bindWxStr      = "绑定微信,请在微信小程序设置页面绑定：%d ID,扫描二维码或者搜索小程序:wxGifHelper"
 	bindWxErrStr   = "你已绑定微信，微信昵称：%s，请勿重复绑定，或者解除绑定后重新绑定"
-	unbindWxStr    = "当前绑定微信昵称：%s，解除微信绑定后，你亦可以用自己的电报ID: %d 来查找已上传的表情"
+	unbindWxStr    = "当前绑定微信昵称：%s（昵称更新可能有有延迟）,解除绑定后已上传的表情依然可以在小程序查看"
 	unbindWxErrStr = "你尚未绑定微信"
 	startSendStr   = "请开始发送表情，结束发送后请输入结束命令：/stop_send 本次发送状态保持时长为1天"
 	startGroupStr  = "请为当前表情包组命名"
 	errorStr       = "当前状态为 %s"
 	commandErrStr  = "当前状态不可接受 %s 命令。可接受命令为 %s"
-
-	wxAppQR = "" // 微信小程序app二维码
+	notBindWxStr   = "当前尚未绑定微信，无法使用，请在小程序设置页面绑定Telegram ID:%d"
+	wxAppQR        = "" // 微信小程序app二维码
 )
 
 // Msg webHook收到的消息类型，需要bot处理
@@ -70,7 +71,7 @@ func (m *Msg) Handler() {
 				BotAPI.Send(remsg)
 			}
 			fileURL := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", BotAPI.Token, f.FilePath)
-			file := common.GifORMp4{m.Message.Sticker.FileID, "Sticker", fileURL}
+			file := common.GifORMp4{ID: m.Message.Sticker.FileID, Type: "Sticker", URL: fileURL}
 			if userMsgStatus.File == nil {
 				userMsgStatus.File = &[]common.GifORMp4{}
 			}
@@ -107,6 +108,7 @@ func (m *Msg) Handler() {
 
 // 只是针对命令行的处理函数
 func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
+	name, isBindOk := isBindWx(m.Message.From.ID)
 	command := m.Message.Text
 	data, ok := userMsgStatus.IsCmdAllowed(command)
 	if !ok {
@@ -115,13 +117,12 @@ func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 	}
 	switch command {
 	case "/start":
-		SendText(m.Message, helpStr)
+		SendText(m.Message, fmt.Sprintf(helpStr, m.Message.From.ID))
 		tUser := model.TgUser{ID: m.Message.From.ID}
 		user := model.User{TgUser: &tUser}
 		model.AddUser(user)
 	case "/bind_wx":
-		name, ok := isBindWx(m.Message.From.ID)
-		if ok {
+		if isBindOk {
 			SendText(m.Message, fmt.Sprintf(bindWxErrStr, name))
 			return
 		}
@@ -129,15 +130,18 @@ func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 		SendImage(m.Message, wxAppQR)
 		return
 	case "/un_bind_wx":
-		name, ok := isBindWx(m.Message.From.ID)
-		if ok {
-			SendText(m.Message, fmt.Sprintf(unbindWxStr, name, m.Message.From.ID))
+		if isBindOk {
+			SendText(m.Message, fmt.Sprintf(unbindWxStr, name))
 			unBindWx(m.Message.From.ID)
 			return
 		}
-		SendText(m.Message, unbindWxErrStr)
+		SendText(m.Message, fmt.Sprintf(notBindWxStr, m.Message.From.ID))
 		return
 	case "/start_send":
+		if !isBindOk {
+			SendText(m.Message, fmt.Sprintf(notBindWxStr, m.Message.From.ID))
+			return
+		}
 		userMsgStatus.Cmd = "/start_send"
 		userMsgStatus.Status = 1
 		userMsgStatus.IsGroup = false
@@ -145,6 +149,10 @@ func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 		SendText(m.Message, startSendStr)
 		return
 	case "/start_group":
+		if !isBindOk {
+			SendText(m.Message, fmt.Sprintf(notBindWxStr, m.Message.From.ID))
+			return
+		}
 		userMsgStatus.Cmd = "/start_group"
 		userMsgStatus.Status = 0
 		userMsgStatus.IsGroup = true

@@ -33,7 +33,7 @@ func isBindWx(id int) (string, bool) {
 // 解绑微信
 func unBindWx(id int) {
 	t := model.TgUser{ID: id}
-	model.UnBindWx(&t)
+	model.UnBindWxFromTg(&t)
 }
 
 // StopSend 结束发送图片,删除redis内的用户状态，转送至队列处理,处理时，如有重复文件，直接引用，不用上传服务器
@@ -95,6 +95,6 @@ func GetFiles() {
 func RUNDOW() {
 	for {
 		GetFiles()
-		time.Sleep(time.Microsecond * 10)
+		time.Sleep(time.Millisecond * 10)
 	}
 }
