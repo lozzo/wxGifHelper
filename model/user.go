@@ -7,55 +7,45 @@ import (
 	"github.com/golang/glog"
 )
 
-// 用户相关功能
-
-// AddUser 添加用户，新用户，来源可能是wx，也可能是tg
-func AddUser(u User) error {
-	if u.TgUser != nil && u.WxUser == nil {
-		_, err := newTgUser(u.TgUser)
-		return err
-	}
-	if u.TgUser == nil && u.WxUser != nil {
-		return newUserFromWx(u.WxUser)
-	}
-	return nil
-}
-
-// 新用户来自wx
-func newUserFromWx(w *WxUser) error {
+// NewUserFromWx 新用户来自wx
+func NewUserFromWx(w *WxUser) (int, error) {
 	userID, err := newWxUser(w)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	stmt2, err := db.Prepare(`INSERT INTO users (wxUserID) VALUES (?)`)
 	if err != nil {
 		glog.Error("数据库错误：", err)
-		return err
+		return 0, err
 	}
 	defer stmt2.Close()
-	_, err = stmt2.Exec(userID)
+	res, err := stmt2.Exec(userID)
 	if err != nil {
 		glog.Error("数据库错误：", err)
-		return err
+		return 0, err
 	}
-
-	return nil
+	ID, err := res.LastInsertId()
+	if err != nil {
+		glog.Error("数据库错误：", err)
+		return 0, err
+	}
+	return int(ID), nil
 }
 
-//添加新的Telegram用户
-func newTgUser(t *TgUser) (int64, error) {
+// NewTgUser 添加新的Telegram用户
+func NewTgUser(tID int) (int64, error) {
 	stmt, err := db.Prepare(`INSERT  INTO tgUsers (id) SELECT (?) FROM DUAL WHERE NOT EXISTS (SELECT id FROM tgUsers WHERE id= ? )`)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(t.ID, t.ID)
+	_, err = stmt.Exec(tID, tID)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err
 	}
-	return int64(t.ID), nil
+	return int64(tID), nil
 }
 
 // 添加新的Wx用户
@@ -81,17 +71,13 @@ func newWxUser(w *WxUser) (int64, error) {
 }
 
 // BindTg 已有用户绑定新Tg
-func BindTg(w *WxUser, t *TgUser) error {
-	_, err := newTgUser(t)
-	if err != nil {
-		return err
-	}
+func BindTg(openID string, tID int) error {
 	stmt, err := db.Prepare(`UPDATE users SET tgUserID = ? WHERE wxUserID =（SELECT id FROM wxUsers WHERE openID = ?)`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(t.ID, w.openID)
+	_, err = stmt.Exec(tID, openID)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return err
@@ -115,13 +101,13 @@ func UnBindWxFromTg(t *TgUser) error {
 }
 
 // UnBindTgFromWX 解绑Tg
-func UnBindTgFromWX(w *WxUser) error {
+func UnBindTgFromWX(openID string) error {
 	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(w.openID)
+	_, err = stmt.Exec(openID)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return err
@@ -145,16 +131,36 @@ func IsBindWx(t *TgUser) (string, error) {
 }
 
 // IsBindTg 在wx小程序内查产是否绑定tg帐号
-func IsBindTg(w *WxUser) (int, error) {
-	var t TgUser
-	err := db.QueryRow("SELECT tgUserID FROM users WHERE wxUserID = (SELECT id FROM wxUsers WHERE openID = ?)", w.openID).Scan(&t.ID)
+func IsBindTg(openid string) (int, error) {
+	var tID int
+	err := db.QueryRow("SELECT tgUserID FROM users WHERE wxUserID = (SELECT id FROM wxUsers WHERE openID = ?)", openid).Scan(&tID)
 	if err == sql.ErrNoRows {
-		glog.V(2).Info(fmt.Sprintf("微信openID:%s 用户尚未绑定TG帐号", w.openID))
+		glog.V(2).Info(fmt.Sprintf("微信openID:%s 用户尚未绑定TG帐号", openid))
 		return 0, nil //这个时候是没有绑定
 	}
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err //出现错误
 	}
-	return t.ID, nil
+	return tID, nil
+}
+
+// GetUserIDByWx 从wx后去用户ID，如果用户不存在，则新建用户
+func GetUserIDByWx(openID, nickName string) int {
+	var uID int
+	SQL := "SELECT id FROM users WHERE wxUserID=(SELECT id FORM wxUsers WHERE openID = ? LIMIT 1)"
+	err := db.QueryRow(SQL, openID).Scan(&uID)
+	if err == sql.ErrNoRows {
+		w := WxUser{
+			openID:   openID,
+			NickName: nickName,
+		}
+		id, err := NewUserFromWx(&w)
+		if err != nil {
+			return 0
+		}
+		return id
+	} else {
+		return uID
+	}
 }

@@ -109,3 +109,46 @@ func addGroup(name string) (int, error) {
 	}
 	return int(ID), nil
 }
+
+// GetGifs 获取一了列表的gifs
+func GetGifs(index, count, uID int) []*Gifs {
+	var gifs []*Gifs
+	SQL := `
+	SELECT 
+		gifs.id,gifs.GroupID,gifs.FileID ,gifGroups.name 
+	FROM  
+		gifs 
+	INNER JOIN 
+		users 
+	ON
+		gifs.UserID = ?
+	LEFT JOIN 
+		gifGroups 
+	ON 
+		gifs.GroupID = gifGroups.id 
+	ORDER BY 
+		gifs.id 
+	LIMIT 
+		?
+	OFFSET 
+		?
+	`
+	index = index * count
+	rows, err := db.Query(SQL, uID, count, index)
+	if err != nil {
+		glog.Warning(err)
+		return gifs
+	}
+	defer rows.Close()
+	for rows.Next() {
+		gif := Gifs{}
+		if err := rows.Scan(&gif.ID, &gif.Group.ID, &gif.File, &gif.Group.Name); err != nil {
+			glog.Warning(err)
+			continue
+		} else {
+			gif.User.ID = uID
+			gifs = append(gifs, &gif)
+		}
+	}
+	return gifs
+}

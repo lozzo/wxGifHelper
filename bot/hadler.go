@@ -118,9 +118,7 @@ func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 	switch command {
 	case "/start":
 		SendText(m.Message, fmt.Sprintf(helpStr, m.Message.From.ID))
-		tUser := model.TgUser{ID: m.Message.From.ID}
-		user := model.User{TgUser: &tUser}
-		model.AddUser(user)
+		model.NewTgUser(m.Message.From.ID)
 	case "/bind_wx":
 		if isBindOk {
 			SendText(m.Message, fmt.Sprintf(bindWxErrStr, name))

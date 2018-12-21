@@ -9,7 +9,10 @@ import (
 	"github.com/golang/glog"
 )
 
-var r *gin.Engine
+var (
+	r  *gin.Engine
+	wx *gin.RouterGroup
+)
 
 // Run http服务启动
 func Run(ipPort string) {
@@ -19,8 +22,10 @@ func Run(ipPort string) {
 // Init webHook服务器
 func Init(WebHookURL string) {
 	r = gin.New()
+	wx = r.Group("/wx")
 	r.Use(gin.Recovery())
 	r.POST(WebHookURL, baseHandler)
+	wxURL()
 }
 func baseHandler(c *gin.Context) {
 	x, _ := ioutil.ReadAll(c.Request.Body)
