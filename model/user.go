@@ -52,13 +52,13 @@ func NewTgUser(tID int) (int64, error) {
 // 添加新的Wx用户
 func newWxUser(w *WxUser) (int64, error) {
 	// stmt, err := db.Prepare(`INSERT INTO wxUsers (openID,nickName) VALUES (?,?)`)
-	stmt, err := db.Prepare(`INSERT INTO wxUsers (openID,nickName) SELECT (?,?) FROM DUAL WHERE NOT EXISTS (SELECT openID FROM wxUsers WHERE openID= ? LIMIT 1 ) `)
+	stmt, err := db.Prepare(`INSERT INTO wxUsers (openID,nickName) VALUES (?,?) `)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err
 	}
 	defer stmt.Close()
-	res, err := stmt.Exec(w.openID, w.NickName, w.openID)
+	res, err := stmt.Exec(w.openID, w.NickName)
 	if err != nil {
 		glog.Error("数据库错误：", err)
 		return 0, err
@@ -73,8 +73,9 @@ func newWxUser(w *WxUser) (int64, error) {
 
 // BindTg 已有用户绑定新Tg
 func BindTg(openID string, tID int) error {
-	stmt, err := db.Prepare(`UPDATE users SET tgUserID = ? WHERE wxUserID =（SELECT id FROM wxUsers WHERE openID = ?)`)
+	stmt, err := db.Prepare(`UPDATE users SET tgUserID = ? WHERE wxUserID =(SELECT id FROM wxUsers WHERE openID = ? LIMIT 1)`)
 	if err != nil {
+		glog.Error("数据库错误：", err)
 		return err
 	}
 	defer stmt.Close()
@@ -88,7 +89,7 @@ func BindTg(openID string, tID int) error {
 
 // UnBindWxFromTg 解绑Wx
 func UnBindWxFromTg(t *TgUser) error {
-	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE tgUserID = ?`)
+	stmt, err := db.Prepare(`UPDATE users SET tgUserID = 0 WHERE tgUserID = ?`)
 	if err != nil {
 		return err
 	}
@@ -103,7 +104,7 @@ func UnBindWxFromTg(t *TgUser) error {
 
 // UnBindTgFromWX 解绑Tg
 func UnBindTgFromWX(openID string) error {
-	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
+	stmt, err := db.Prepare(`UPDATE users SET tgUserID = 0 WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
 	if err != nil {
 		return err
 	}
@@ -150,7 +151,7 @@ func IsBindTg(openid string) (int, error) {
 func GetUserIDByWx(openID, nickName string) int {
 	var uID int
 	SQL := "SELECT id FROM users WHERE wxUserID=(SELECT id FROM wxUsers WHERE openID = ? LIMIT 1)"
-	err := db.QueryRow(SQL, openID).Scan(uID)
+	err := db.QueryRow(SQL, openID).Scan(&uID)
 	if err == sql.ErrNoRows {
 		glog.V(5).Info("没有用户，需要新建")
 		w := WxUser{

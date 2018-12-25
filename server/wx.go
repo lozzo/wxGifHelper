@@ -46,15 +46,18 @@ func BindTg(c *gin.Context) {
 	openID := c.MustGet("openid").(string)
 	tgID := c.DefaultQuery("tgID", "")
 	if tgID == "" {
+		glog.V(5).Info("tgID参数错误")
 		c.AbortWithStatus(400)
 		return
 	}
 	inttgID, err := strconv.Atoi(tgID)
 	if err != nil {
+		glog.V(5).Info("tgID参数类型错误")
 		c.AbortWithStatus(500)
 		return
 	}
 	if model.BindTg(openID, inttgID) != nil {
+		glog.V(5).Info("绑定失败")
 		c.AbortWithStatus(500)
 		return
 	}
@@ -75,8 +78,8 @@ func UnBindTg(c *gin.Context) {
 // GetMyGifs 获取用户的表情包
 //参数？index=1&count=10?ask=11
 func GetMyGifs(c *gin.Context) {
-	index := c.DefaultQuery("index", "1")
-	count := c.DefaultQuery("count", "10")
+	index := c.DefaultQuery("index", "0")
+	count := c.DefaultQuery("count", "500")
 	uid := c.DefaultQuery("ask", "0")
 	// openID := c.MustGet("openid").(string)
 	iindex, err := strconv.Atoi(index)
@@ -95,6 +98,9 @@ func GetMyGifs(c *gin.Context) {
 		return
 	}
 	gifs := model.GetGifs(iindex, icount, iuid)
-	c.JSON(200, gifs)
+
+	c.JSON(200, gin.H{
+		"gifs": gifs,
+	})
 	return
 }
