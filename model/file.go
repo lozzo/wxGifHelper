@@ -161,3 +161,25 @@ func GetGifs(index, count, uID int) []*OOO {
 	}
 	return gifs
 }
+
+// GetRandGifs 随机获取一些图片
+func GetRandGifs(n int) []string {
+	var gifs []string
+	SQL := "SELECT FileID FROM GIFS ORDER BY rand() LIMIT ?"
+	rows, err := db.Query(SQL, n)
+	if err != nil {
+		glog.Warning(err)
+		return gifs
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var gif string
+		if err := rows.Scan(&gif); err != nil {
+			glog.Warning(err)
+			continue
+		} else {
+			gifs = append(gifs, gif)
+		}
+	}
+	return gifs
+}
