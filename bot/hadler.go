@@ -112,11 +112,11 @@ func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 		return
 	case "/stop":
 		StopSend(m.Message.From.ID, userMsgStatus)
-		if len(*userMsgStatus.File) == 0 {
+		if len(userMsgStatus.File) == 0 {
 			SendText(m.Message, "已发送0个表情。哟")
 			return
 		}
-		stopSendStr := fmt.Sprintf("已发送 %d 个表情 ,请在用户 %s 用户内打开小程序查看", len(*userMsgStatus.File), name)
+		stopSendStr := fmt.Sprintf("已发送 %d 个表情 ,请在用户 %s 用户内打开小程序查看", len(userMsgStatus.File), name)
 		SendText(m.Message, stopSendStr)
 		return
 	}

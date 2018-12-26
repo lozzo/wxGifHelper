@@ -11,9 +11,9 @@ import (
 // MsgStatus 当前消息状态
 type MsgStatus struct {
 	lock       sync.Mutex
-	Cmd        string      `json:"-"`    // 当前命令
-	File       *[]GifORMp4 `json:"File"` // 文件列表
-	ID         int         `json:"-"`
+	Cmd        string     `json:"-"`    // 当前命令
+	File       []GifORMp4 `json:"File"` // 文件列表
+	ID         int        `json:"-"`
 	time       time.Time
 	WxNickName string `json:"-"`
 	BindWxCode int    `json:"-"` // -1:未知，需要查询，0：未绑定，1：已绑定
@@ -42,13 +42,14 @@ func (m *MsgStatus) AppendFile(g GifORMp4) (int, int) { //状态码。长度
 	if m.Cmd != "/send" {
 		return 0, 2
 	}
-	for _, v := range *m.File {
+
+	for _, v := range m.File {
 		if g.ID == v.ID {
 			return 0, 1
 		}
 	}
-	*m.File = append(*m.File, g)
-	return 0, len(*m.File)
+	m.File = append(m.File, g)
+	return 0, len(m.File)
 }
 
 // IsCmdAllowed 状态判断写的真垃圾啊，要重写要重写，要上状态机！！！

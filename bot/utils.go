@@ -52,7 +52,7 @@ func StopSend(id int, m *common.MsgStatus) error {
 	key := strconv.Itoa(id)
 	data := m.JSON()
 	if data == nil {
-		str := fmt.Sprintf("%d个表情发送全军阵亡", len(*m.File))
+		str := fmt.Sprintf("%d个表情发送全军阵亡", len(m.File))
 		remsg := tgbotapi.NewMessage(int64(m.ID), str)
 		BotAPI.Send(remsg)
 		return errors.New("")
@@ -79,7 +79,7 @@ func GetFiles() {
 		return
 	}
 
-	for _, i := range *m.File {
+	for _, i := range m.File {
 		file := common.FileWithURL{
 			URL:  i.URL,
 			Name: i.ID,
@@ -88,7 +88,7 @@ func GetFiles() {
 	}
 	tools.DowAndUploadToOss(files, 10)
 	model.AddFilesFromTg(m)
-	str := fmt.Sprintf("%d个表情发送成功上传成功，请在微信小程序上查看", len(*m.File))
+	str := fmt.Sprintf("%d个表情发送成功上传成功，请在微信小程序上查看", len(m.File))
 	remsg := tgbotapi.NewMessage(int64(m.ID), str)
 	BotAPI.Send(remsg)
 }

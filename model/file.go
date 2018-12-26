@@ -56,7 +56,7 @@ func AddFilesFromTg(m *common.MsgStatus) {
 	if err != nil {
 		glog.Error("数据库错误：", err)
 	}
-	for _, file := range *m.File {
+	for _, file := range m.File {
 		sql := "INSERT INTO gifs (FileID,UserID) VALUES (?,( SELECT id FROM users WHERE tgUserID = ? LIMIT 1)) "
 		// sql := "INSERT INTO gifs (FileID,UserID) VALUES (?,1)"
 		_, err := tx.Exec(sql, file.ID, m.ID)
