@@ -56,34 +56,14 @@ func AddFilesFromTg(m *common.MsgStatus) {
 	if err != nil {
 		glog.Error("数据库错误：", err)
 	}
-	groupID := 0
-	if m.IsGroup {
-		groupID, err = addGroup(m.GroupName)
+	for _, file := range *m.File {
+		sql := "INSERT INTO gifs (FileID,UserID) VALUES (?,( SELECT id FROM users WHERE tgUserID = ? LIMIT 1)) "
+		// sql := "INSERT INTO gifs (FileID,UserID) VALUES (?,1)"
+		_, err := tx.Exec(sql, file.ID, m.ID)
 		if err != nil {
+			tx.Rollback()
 			glog.Error("数据库错误：", err)
 			return
-		}
-	}
-	if m.IsGroup {
-		for _, file := range *m.File {
-			sql := "INSERT INTO gifs (GroupID,FileID,UserID) VALUES (?,?,(SELECT id FROM users WHERE tgUserID = ? LIMIT 1))"
-			_, err := tx.Exec(sql, groupID, file.ID, m.ID)
-			if err != nil {
-				tx.Rollback()
-				glog.Error("数据库错误：", err)
-				return
-			}
-		}
-	} else {
-		for _, file := range *m.File {
-			sql := "INSERT INTO gifs (FileID,UserID) VALUES (?,( SELECT id FROM users WHERE tgUserID = ? LIMIT 1)) "
-			// sql := "INSERT INTO gifs (FileID,UserID) VALUES (?,1)"
-			_, err := tx.Exec(sql, file.ID, m.ID)
-			if err != nil {
-				tx.Rollback()
-				glog.Error("数据库错误：", err)
-				return
-			}
 		}
 	}
 	err = tx.Commit()
