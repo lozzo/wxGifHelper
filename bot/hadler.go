@@ -31,7 +31,7 @@ var (
 	notBindWxStr   = "当前尚未绑定微信，无法使用，请在小程序设置页面绑定Telegram ID:%d"
 	wxAppQR        = "" // 微信小程序app二维码
 )
-var cache = common.Cache{}
+var cache = common.Cache{Users: make(map[int]*common.MsgStatus)}
 
 // Msg webHook收到的消息类型，需要bot处理
 type Msg struct {
