@@ -42,8 +42,9 @@ func isBindWx(m *common.MsgStatus) (string, bool) {
 }
 
 // 解绑微信
-func unBindWx(id int) {
-	t := model.TgUser{ID: id}
+func unBindWx(m *common.MsgStatus) {
+	t := model.TgUser{ID: m.ID}
+	m.BindWxCode = 0
 	model.UnBindWxFromTg(&t)
 }
 
@@ -65,12 +66,11 @@ func StopSend(id int, m *common.MsgStatus) error {
 	if tools.DelKey(key) != nil {
 		glog.Error("删除ke失败：", err)
 	}
-	// GetFiles()
-	// model.AddFilesFromTg(m)
+	cache.DeleteUser(m.ID)
 	return nil
 }
 
-func GetFiles() {
+func getFiles() {
 	var files []*common.FileWithURL
 	data, _ := tools.Dequeue(common.QUEUE)
 	m := &common.MsgStatus{}
@@ -80,10 +80,14 @@ func GetFiles() {
 	}
 
 	for _, i := range m.File {
+		if cache.IsUploadedID(i.ID) {
+			i.URL = "uploaded"
+		}
 		file := common.FileWithURL{
 			URL:  i.URL,
 			Name: i.ID,
 		}
+		cache.AddUploadedID(i.ID)
 		files = append(files, &file)
 	}
 	tools.DowAndUploadToOss(files, 10)
@@ -96,7 +100,7 @@ func GetFiles() {
 // RUNDOW 开始下载
 func RUNDOW() {
 	for {
-		GetFiles()
+		getFiles()
 		time.Sleep(time.Millisecond * 10)
 	}
 }

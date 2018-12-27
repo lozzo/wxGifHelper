@@ -8,6 +8,7 @@ import (
 	"tg_gif/model"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/golang/glog"
 )
 
 var (
@@ -31,7 +32,9 @@ var (
 	notBindWxStr   = "当前尚未绑定微信，无法使用，请在小程序设置页面绑定Telegram ID:%d"
 	wxAppQR        = "" // 微信小程序app二维码
 )
-var cache = common.Cache{Users: make(map[int]*common.MsgStatus)}
+var cache = common.Cache{
+	Users: make(map[int]*common.MsgStatus),
+}
 
 // Msg webHook收到的消息类型，需要bot处理
 type Msg struct {
@@ -60,6 +63,7 @@ func (m *Msg) Handler() {
 		fileURL := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", BotAPI.Token, f.FilePath)
 		file := common.GifORMp4{ID: m.Message.Sticker.FileID, Type: "Sticker", URL: fileURL}
 		code, lenth := userMsgStatus.AppendFile(file)
+		glog.V(5).Info("code,lenth:", code, "--", lenth)
 		switch code {
 		case 0:
 			SendText(m.Message, fmt.Sprintf("收到 %d 个表情", lenth))
@@ -101,14 +105,16 @@ func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 		}
 		SendText(m.Message, fmt.Sprintf(bindWxStr, m.Message.From.ID))
 		SendImage(m.Message, wxAppQR)
+		cache.DeleteUser(userMsgStatus.ID)
 		return
 	case "/un_bind_wx":
 		if isBindOk {
 			SendText(m.Message, fmt.Sprintf(unbindWxStr, name))
-			unBindWx(m.Message.From.ID)
+			unBindWx(userMsgStatus)
 			return
 		}
 		SendText(m.Message, fmt.Sprintf(notBindWxStr, m.Message.From.ID))
+		cache.DeleteUser(userMsgStatus.ID)
 		return
 	case "/stop":
 		StopSend(m.Message.From.ID, userMsgStatus)

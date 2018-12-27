@@ -62,6 +62,7 @@ func AddFilesFromTg(m *common.MsgStatus) {
 		_, err := tx.Exec(sql, file.ID, m.ID)
 		if err != nil {
 			tx.Rollback()
+			glog.V(5).Info(file.ID, m.ID)
 			glog.Error("数据库错误：", err)
 			return
 		}
@@ -114,12 +115,15 @@ func GetGifs(index, count, uID int) []*OOO {
 		gifGroups 
 	ON 
 		gifs.GroupID = gifGroups.id 
+	GROUP BY 
+		gifs.FileID 
 	ORDER BY 
 		gifs.id 
 	LIMIT 
 		?
 	OFFSET 
 		?
+	DESC
 	`
 	index = index * count
 	rows, err := db.Query(SQL, uID, count, index)
@@ -147,6 +151,28 @@ func GetRandGifs(n int) []string {
 	var gifs []string
 	SQL := "SELECT DISTINCT FileID FROM gifs ORDER BY rand() LIMIT ?"
 	rows, err := db.Query(SQL, n)
+	if err != nil {
+		glog.Warning(err)
+		return gifs
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var gif string
+		if err := rows.Scan(&gif); err != nil {
+			glog.Warning(err)
+			continue
+		} else {
+			gifs = append(gifs, gif)
+		}
+	}
+	return gifs
+}
+
+// GetAllFilesID 返回所有非重复的fileID
+func GetAllFilesID() []string {
+	var gifs []string
+	SQL := "SELECT DISTINCT FileID FROM gifs"
+	rows, err := db.Query(SQL)
 	if err != nil {
 		glog.Warning(err)
 		return gifs

@@ -3,34 +3,48 @@ package common
 import (
 	"sync"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 // Cache 一个用户状态的缓存
 type Cache struct {
-	*uploadedIDSyncMap
-	Users map[int]*MsgStatus
+	UploadedIDSyncMap *uploadedIDSyncMap
+	Users             map[int]*MsgStatus
 }
 
 type uploadedIDSyncMap struct {
-	lock       sync.Mutex
 	uploadedID map[string]bool
+	lock       sync.Mutex
+}
+
+// Init 程序开始时，将所有sql内已有记录的数据放到已经加载的map内
+func (c *Cache) Init(x []string) {
+	if c.UploadedIDSyncMap == nil {
+		c.UploadedIDSyncMap = &uploadedIDSyncMap{uploadedID: make(map[string]bool)}
+	}
+	for _, v := range x {
+		c.UploadedIDSyncMap.uploadedID[v] = true
+	}
+	go c.autoRemove()
+	// glog.V(5).Info(*c.UploadedIDSyncMap)
 }
 
 // IsUploadedID 是否是oss已经存在的ID
-func (u *uploadedIDSyncMap) IsUploadedID(id string) bool {
-	u.lock.Lock()
-	defer u.lock.Unlock()
-	if _, ok := u.uploadedID[id]; ok {
+func (c *Cache) IsUploadedID(id string) bool {
+	c.UploadedIDSyncMap.lock.Lock()
+	defer c.UploadedIDSyncMap.lock.Unlock()
+	if _, ok := c.UploadedIDSyncMap.uploadedID[id]; ok {
 		return true
 	}
 	return false
 }
 
 // AddUploadedID 添加已知id
-func (u *uploadedIDSyncMap) AddUploadedID(id string) {
-	u.lock.Lock()
-	defer u.lock.Unlock()
-	u.uploadedID[id] = true
+func (c *Cache) AddUploadedID(id string) {
+	c.UploadedIDSyncMap.lock.Lock()
+	defer c.UploadedIDSyncMap.lock.Unlock()
+	c.UploadedIDSyncMap.uploadedID[id] = true
 }
 
 // AddUser 添加一个用户状态
@@ -44,13 +58,14 @@ func (c *Cache) DeleteUser(id int) {
 	delete(c.Users, id)
 }
 
-// AutoRemove 自动删除
-func (c *Cache) AutoRemove() {
+// autoRemove 自动删除
+func (c *Cache) autoRemove() {
 	for {
 		time.Sleep(time.Second * 5)
-		if len(c.Users) > 10000 {
+		if len(c.Users) > 100000 {
 			for _, i := range c.Users {
 				if time.Since(i.time) > time.Hour*4 {
+					glog.V(5).Info("清除", i.ID)
 					c.DeleteUser(i.ID)
 				}
 			}

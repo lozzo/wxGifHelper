@@ -69,6 +69,7 @@ func OssInit(o *OssConf) {
 func DowAndUploadToOss(files []*common.FileWithURL, count int) {
 	goroutineCount := make(chan int, count)
 	for i, file := range files {
+		glog.V(5).Info(file)
 		goroutineCount <- i
 		go dowWihtGenGifAndUploadToOss(file, goroutineCount)
 	}
@@ -77,6 +78,9 @@ func DowAndUploadToOss(files []*common.FileWithURL, count int) {
 
 // dowAndUploadToOss 直接上传webp到oss --废弃
 func dowAndUploadToOss(f *common.FileWithURL, c chan int) {
+	if f.URL == "uploaded" {
+		return
+	}
 	resp, err := HTTPClient.Get(f.URL)
 	if err != nil {
 		glog.Error("请求错误", err)
@@ -99,6 +103,9 @@ func dowAndUploadToOss(f *common.FileWithURL, c chan int) {
 
 // dowWihtGenGifAndUploadToOss 下载然后生成gif再上传到oss
 func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
+	if f.URL == "uploaded" {
+		return
+	}
 	resp, err := HTTPClient.Get(f.URL)
 	if err != nil {
 		glog.Error("请求错误", err)
