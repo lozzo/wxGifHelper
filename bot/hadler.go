@@ -91,6 +91,7 @@ func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 	case "/send":
 		if !isBindOk {
 			SendText(m.Message, fmt.Sprintf(notBindWxStr, m.Message.From.ID))
+			cache.DeleteUser(userMsgStatus.ID)
 			return
 		}
 		userMsgStatus.Cmd = "/send"
@@ -99,22 +100,23 @@ func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 		return
 
 	case "/bind_wx":
+		cache.DeleteUser(userMsgStatus.ID)
 		if isBindOk {
 			SendText(m.Message, fmt.Sprintf(bindWxErrStr, name))
 			return
 		}
 		SendText(m.Message, fmt.Sprintf(bindWxStr, m.Message.From.ID))
 		SendImage(m.Message, wxAppQR)
-		cache.DeleteUser(userMsgStatus.ID)
+
 		return
 	case "/un_bind_wx":
+		cache.DeleteUser(userMsgStatus.ID)
 		if isBindOk {
 			SendText(m.Message, fmt.Sprintf(unbindWxStr, name))
 			unBindWx(userMsgStatus)
 			return
 		}
 		SendText(m.Message, fmt.Sprintf(notBindWxStr, m.Message.From.ID))
-		cache.DeleteUser(userMsgStatus.ID)
 		return
 	case "/stop":
 		StopSend(m.Message.From.ID, userMsgStatus)

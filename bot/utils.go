@@ -32,10 +32,12 @@ func isBindWx(m *common.MsgStatus) (string, bool) {
 		}
 		m.BindWxCode = 1
 		m.WxNickName = name
+		glog.V(5).Info("+++", name)
 		return name, true
 	case 0:
 		return "", false
 	case 1:
+		glog.V(5).Info(".11.", m.WxNickName)
 		return m.WxNickName, true
 	}
 	return "", false

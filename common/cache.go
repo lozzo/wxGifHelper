@@ -78,6 +78,7 @@ func (c *Cache) GetUserMsgStatus(id int) *MsgStatus {
 	if v, ok := c.Users[id]; ok {
 		return v
 	}
+	glog.V(5).Info("新的用户状态")
 	m := &MsgStatus{time: time.Now(), BindWxCode: -1, ID: id}
 	c.AddUser(id, m)
 	return m

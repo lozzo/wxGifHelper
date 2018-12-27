@@ -136,13 +136,9 @@ func IsBindWx(t *TgUser) (string, error) {
 func IsBindTg(openid string) (int, error) {
 	var tID int
 	err := db.QueryRow("SELECT tgUserID FROM users WHERE wxUserID = (SELECT id FROM wxUsers WHERE openID = ?)", openid).Scan(&tID)
-	if err == sql.ErrNoRows {
+	if err != nil {
 		glog.V(2).Info(fmt.Sprintf("微信openID:%s 用户尚未绑定TG帐号", openid))
 		return 0, nil //这个时候是没有绑定
-	}
-	if err != nil {
-		glog.Error("数据库错误：", err)
-		return 0, err //出现错误
 	}
 	return tID, nil
 }
