@@ -146,8 +146,9 @@ func IsBindTg(openid string) (int, error) {
 // GetUserIDByWx 从wx后去用户ID，如果用户不存在，则新建用户
 func GetUserIDByWx(openID, nickName string) int {
 	var uID int
-	SQL := "SELECT id FROM users WHERE wxUserID=(SELECT id FROM wxUsers WHERE openID = ? LIMIT 1)"
-	err := db.QueryRow(SQL, openID).Scan(&uID)
+	var uNickName string
+	SQL := "SELECT u.id w.nickName from users as u inner join wxUsers as w on u.wxUserID = w.id where w.openID= ?"
+	err := db.QueryRow(SQL, openID).Scan(&uID, &uNickName)
 	if err == sql.ErrNoRows {
 		glog.V(5).Info("没有用户，需要新建")
 		w := WxUser{
@@ -161,6 +162,18 @@ func GetUserIDByWx(openID, nickName string) int {
 		return id
 	} else if err != nil {
 		glog.V(5).Info(err)
+	}
+	if nickName != uNickName {
+		SQL = "UPDATE wxUsers SET nickName = ? where openID= ?"
+		stmt, err := db.Prepare(SQL)
+		if err != nil {
+			glog.V(5).Info(err)
+		}
+		defer stmt.Close()
+		_, err = stmt.Exec(uNickName, openID)
+		if err != nil {
+			glog.Error("数据库错误：", err)
+		}
 	}
 	glog.V(5).Info("uid:", uID)
 	return uID
