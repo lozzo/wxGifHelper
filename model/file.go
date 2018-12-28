@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"tg_gif/common"
 
 	"github.com/golang/glog"
@@ -92,55 +91,24 @@ func addGroup(name string) (int, error) {
 	return int(ID), nil
 }
 
-type OOO struct {
-	ID    int
-	Gid   *sql.NullInt64
-	FID   string
-	Gname *string
-}
-
 // GetGifs 获取一了列表的gifs
-func GetGifs(index, count, uID int) []*OOO {
-	var gifs []*OOO
-	SQL := `
-	SELECT 
-		gifs.id,gifs.GroupID,gifs.FileID ,gifGroups.name 
-	FROM  
-		gifs 
-	INNER JOIN 
-		users 
-	ON
-		gifs.UserID = ?
-	LEFT JOIN 
-		gifGroups 
-	ON 
-		gifs.GroupID = gifGroups.id 
-	GROUP BY 
-		gifs.FileID 
-	ORDER BY 
-		gifs.id 
-	LIMIT 
-		?
-	OFFSET 
-		?
-	DESC
-	`
-	index = index * count
-	rows, err := db.Query(SQL, uID, count, index)
+func GetGifs(uID int) []string {
+	var gifs []string
+	SQL := "SELECT FileID FROM gifs WHERE userID = ? GROUP BY FileID ORDER BY max(id) desc"
+
+	rows, err := db.Query(SQL, uID)
 	if err != nil {
 		glog.Warning(err)
 		return gifs
 	}
-
 	defer rows.Close()
 	for rows.Next() {
-		gif := OOO{}
-		if err := rows.Scan(&gif.ID, &gif.Gid, &gif.FID, &gif.Gname); err != nil {
+		var gif string
+		if err := rows.Scan(&gif); err != nil {
 			glog.Warning(err)
 			continue
 		} else {
-			gif.ID = uID
-			gifs = append(gifs, &gif)
+			gifs = append(gifs, gif)
 		}
 	}
 	return gifs

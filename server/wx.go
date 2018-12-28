@@ -76,28 +76,17 @@ func UnBindTg(c *gin.Context) {
 }
 
 // GetMyGifs 获取用户的表情包
-//参数？index=1&count=10?ask=11
+//参数?ask=11
 func GetMyGifs(c *gin.Context) {
-	index := c.DefaultQuery("index", "0")
-	count := c.DefaultQuery("count", "500")
 	uid := c.DefaultQuery("ask", "0")
 	// openID := c.MustGet("openid").(string)
-	iindex, err := strconv.Atoi(index)
-	if err != nil {
-		c.AbortWithStatus(500)
-		return
-	}
-	icount, err := strconv.Atoi(count)
-	if err != nil {
-		c.AbortWithStatus(500)
-		return
-	}
+
 	iuid, err := strconv.Atoi(uid)
 	if err != nil {
 		c.AbortWithStatus(500)
 		return
 	}
-	gifs := model.GetGifs(iindex, icount, iuid)
+	gifs := model.GetGifs(iuid)
 
 	c.JSON(200, gin.H{
 		"gifs": gifs,
@@ -107,7 +96,7 @@ func GetMyGifs(c *gin.Context) {
 
 // GetRandGifs 获取随机的表情
 func GetRandGifs(c *gin.Context) {
-	gifs := model.GetRandGifs(66)
+	gifs := model.GetRandGifs(660)
 	c.JSON(200, gin.H{
 		"gifs": gifs,
 	})

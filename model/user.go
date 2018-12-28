@@ -104,7 +104,7 @@ func UnBindWxFromTg(t *TgUser) error {
 
 // UnBindTgFromWX 解绑Tg
 func UnBindTgFromWX(openID string) error {
-	stmt, err := db.Prepare(`UPDATE users SET tgUserID = 0 WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
+	stmt, err := db.Prepare(`UPDATE users SET tgUserID = NULL WHERE wxUserId = (SELECT id FROM wxUsers WHERE openID = ?)`)
 	if err != nil {
 		return err
 	}
