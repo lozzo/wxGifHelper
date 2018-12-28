@@ -147,7 +147,7 @@ func IsBindTg(openid string) (int, error) {
 func GetUserIDByWx(openID, nickName string) int {
 	var uID int
 	var uNickName string
-	SQL := "SELECT u.id w.nickName from users as u inner join wxUsers as w on u.wxUserID = w.id where w.openID= ?"
+	SQL := "SELECT u.id,w.nickName from users as u inner join wxUsers as w on u.wxUserID = w.id where w.openID= ?"
 	err := db.QueryRow(SQL, openID).Scan(&uID, &uNickName)
 	if err == sql.ErrNoRows {
 		glog.V(5).Info("没有用户，需要新建")
