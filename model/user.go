@@ -163,6 +163,7 @@ func GetUserIDByWx(openID, nickName string) int {
 	} else if err != nil {
 		glog.V(5).Info(err)
 	}
+	glog.V(5).Info(uNickName, "-----", nickName)
 	if nickName != uNickName {
 		SQL = "UPDATE wxUsers SET nickName = ? where openID= ?"
 		stmt, err := db.Prepare(SQL)
@@ -170,7 +171,7 @@ func GetUserIDByWx(openID, nickName string) int {
 			glog.V(5).Info(err)
 		}
 		defer stmt.Close()
-		_, err = stmt.Exec(uNickName, openID)
+		_, err = stmt.Exec(nickName, openID)
 		if err != nil {
 			glog.Error("数据库错误：", err)
 		}
