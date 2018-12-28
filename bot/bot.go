@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"tg_gif/model"
 
 	"github.com/golang/glog"
 
@@ -32,6 +33,8 @@ func Init(c *Conf) {
 	glog.V(5).Info(fmt.Sprintf("%s", string(res.Result)))
 	me, _ := BotAPI.GetMe()
 	glog.V(5).Info(fmt.Sprintf("%+v", me))
+	allID := model.GetAllFilesID()
+	cache.Init(allID)
 	go RUNDOW()
 }
 

@@ -1,14 +1,22 @@
 package common
 
+import (
+	"encoding/json"
+	"sync"
+	"time"
+
+	"github.com/golang/glog"
+)
+
 // MsgStatus 当前消息状态
 type MsgStatus struct {
-	Cmd       string      // 当前命令
-	Count     int         // 图片数量
-	File      *[]GifORMp4 // 文件列表
-	IsGroup   bool        // 是否为一组文件
-	Status    int         // 0 ：未开始存图。1：正在存图，2：结束存图 主要用在group时命名等待
-	GroupName string
-	ID        int
+	lock       sync.Mutex
+	Cmd        string     `json:"-"`    // 当前命令
+	File       []GifORMp4 `json:"File"` // 文件列表
+	ID         int        `json:"ID"`
+	time       time.Time
+	WxNickName string `json:"-"`
+	BindWxCode int    `json:"-"` // -1:未知，需要查询，0：未绑定，1：已绑定
 }
 
 // GifORMp4 动图或者mp4
@@ -26,49 +34,67 @@ type FileWithURL struct {
 
 const QUEUE = "data_queue"
 
-// ALL 不同的用户有各自的状态。存在redis，避免自己写过期设置，
-// 开始发送表情之后1小时都可以继续发送，超过一小时，删除发送状态，每次发图重新计算时间
-// redis json 数据格式类型如下，每次更新重写设置时间
-// var ALL = make(map[string]MsgStatus)
-
-func (m *MsgStatus) AppendFile(g GifORMp4) {
-	if m.Status != 2 {
-		*m.File = append(*m.File, g)
+// AppendFile 添加文件
+// 状态码 0：ok，1：文件已存在，2：当前状态不可发送
+func (m *MsgStatus) AppendFile(g GifORMp4) (int, int) { //状态码。长度
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	glog.V(5).Info("cmd:", m.Cmd)
+	if m.Cmd != "/send" {
+		return 2, 0
 	}
+
+	for _, v := range m.File {
+		if g.ID == v.ID {
+			return 1, 0
+		}
+	}
+	m.File = append(m.File, g)
+	return 0, len(m.File)
 }
 
-// 状态判断写的真垃圾啊，要重写要重写，要上状态机！！！
+// IsCmdAllowed 状态判断写的真垃圾啊，要重写要重写，要上状态机！！！
 func (m *MsgStatus) IsCmdAllowed(cmd string) ([]string, bool) {
 	a := false
-	allCmd := []string{"/start_send", "/start_group", "/bind_wx", "/un_bind_wx", "/stop_send"}
-	cmds1 := []string{"/stop_send"}
-	cmds2 := []string{"/start_send", "/start_group", "/bind_wx", "/un_bind_wx"}
+	allCmd := []string{"/send", "/stop", "/bind_wx", "/un_bind_wx"} // 所有可选状态
+	startStatus := []string{"/stop"}                                // 处于开始状态的时候
+	noStatus := []string{"/send", "/bind_wx", "/un_bind_wx"}        // 没有状态的时候
 	if cmd == "/start" {
-		return cmds2, true
+		return noStatus, true
 	}
 	for _, x := range allCmd {
-		a = a || (x == cmd)
+		a = (a || (x == cmd))
 	}
 	if !a {
-		return cmds2, a
+		return noStatus, a
 	}
-	var x = map[string][]string{
-		"/stop_send":   cmds2,
-		"/start_send":  cmds1,
-		"/start_group": cmds1,
-		"/bind_wx":     cmds1,
-		"/un_bind_wx":  cmds1,
+	var cmdMap = map[string][]string{
+		"/stop":       noStatus,
+		"/send":       startStatus,
+		"/bind_wx":    noStatus,
+		"/un_bind_wx": noStatus,
 	}
 	if m.Cmd == "" {
-		if cmd == "/stop_send" {
-			return cmds2, false
+		if cmd == "/stop" {
+			return noStatus, false
 		}
-		return cmds2, true
+		return allCmd, true
 	}
-	allowedCmd := x[m.Cmd]
+	allowedCmd := cmdMap[m.Cmd]
 	b := false
 	for _, x := range allowedCmd {
 		b = b || (x == cmd)
 	}
-	return cmds2, b
+	return allowedCmd, b
+}
+
+// JSON 返回json字符串
+func (m *MsgStatus) JSON() []byte {
+	x, err := json.Marshal(m)
+	if err != nil {
+		glog.Error("序列化数据错误", err)
+		return nil
+	}
+	return x
+
 }

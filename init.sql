@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS `gifGroups`;
 CREATE TABLE `gifs`
 (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `GroupID` INTEGER NULL DEFAULT NULL,
+    `GroupID` INTEGER  NULL DEFAULT NULL,
     `FileID` CHAR(40) NOT NULL,
     `UserID` INTEGER NOT NULL,
     PRIMARY KEY (`id`)
@@ -25,7 +25,7 @@ CREATE TABLE `wxUsers`
 
 CREATE TABLE `tgUsers`
 (
-    `id` INTEGER NOT NULL,
+    `id` INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`)
 );
 
@@ -33,7 +33,7 @@ CREATE TABLE `users`
 (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `tgUserID` INTEGER NULL DEFAULT NULL,
-    `wxUserID` INTEGER NULL DEFAULT NULL,
+    `wxUserID` INTEGER  NOT NULL,
     PRIMARY KEY (`id`)
 );
 
@@ -51,4 +51,5 @@ ALTER TABLE `users` ADD FOREIGN KEY (tgUserID) REFERENCES `tgUsers` (`id`);
 ALTER TABLE `users` ADD FOREIGN KEY (wxUserID) REFERENCES `wxUsers` (`id`);
 
 
-INSERT INTO tgUsers (id) VALUES (1233);
+INSERT INTO tgUsers (id) VALUES (0);
+INSERT INTO 
