@@ -3,7 +3,6 @@ package tools
 import (
 	"bytes"
 	"image"
-	"image/color/palette"
 	"image/draw"
 	"image/gif"
 	"log"
@@ -126,7 +125,7 @@ func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 	b := bytes.NewBuffer(make([]byte, 0))
 
 	anim := gif.GIF{}
-	paletted := image.NewPaletted(img.Bounds(), palette.Plan9)
+	paletted := image.NewPaletted(img.Bounds(), myTransparentPalette)
 	draw.FloydSteinberg.Draw(paletted, img.Bounds(), img, image.ZP)
 	anim.Image = append(anim.Image, paletted)
 	anim.Image = append(anim.Image, paletted)
