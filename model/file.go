@@ -94,7 +94,7 @@ func addGroup(name string) (int, error) {
 // GetGifs 获取一了列表的gifs
 func GetGifs(uID int) []string {
 	var gifs []string
-	SQL := "SELECT FileID FROM gifs WHERE userID = ? GROUP BY FileID ORDER BY max(id) desc"
+	SQL := "SELECT FileID FROM gifs WHERE userID = ? GROUP BY FileID ORDER BY max(id) desc LIMIT 200"
 
 	rows, err := db.Query(SQL, uID)
 	if err != nil {

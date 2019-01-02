@@ -3,7 +3,6 @@ package tools
 import (
 	"bytes"
 	"image"
-	"image/color/palette"
 	"image/draw"
 	"image/gif"
 	"log"
@@ -78,6 +77,9 @@ func DowAndUploadToOss(files []*common.FileWithURL, count int) {
 
 // dowAndUploadToOss 直接上传webp到oss --废弃
 func dowAndUploadToOss(f *common.FileWithURL, c chan int) {
+	defer func(i chan int) {
+		<-i
+	}(c)
 	if f.URL == "uploaded" {
 		return
 	}
@@ -98,11 +100,13 @@ func dowAndUploadToOss(f *common.FileWithURL, c chan int) {
 		glog.Error("上传错误：", err)
 		return
 	}
-	<-c
 }
 
 // dowWihtGenGifAndUploadToOss 下载然后生成gif再上传到oss
 func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
+	defer func(i chan int) {
+		<-i
+	}(c)
 	if f.URL == "uploaded" {
 		return
 	}
@@ -121,7 +125,7 @@ func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 	b := bytes.NewBuffer(make([]byte, 0))
 
 	anim := gif.GIF{}
-	paletted := image.NewPaletted(img.Bounds(), palette.Plan9)
+	paletted := image.NewPaletted(img.Bounds(), myTransparentPalette)
 	draw.FloydSteinberg.Draw(paletted, img.Bounds(), img, image.ZP)
 	anim.Image = append(anim.Image, paletted)
 	anim.Image = append(anim.Image, paletted)
@@ -140,5 +144,4 @@ func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 		glog.Error("上传错误：", err)
 		return
 	}
-	<-c
 }
