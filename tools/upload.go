@@ -78,14 +78,15 @@ func DowAndUploadToOss(files []*common.FileWithURL, count int) {
 
 // dowAndUploadToOss 直接上传webp到oss --废弃
 func dowAndUploadToOss(f *common.FileWithURL, c chan int) {
+	defer func(i chan int) {
+		<-i
+	}(c)
 	if f.URL == "uploaded" {
-		<-c
 		return
 	}
 	resp, err := HTTPClient.Get(f.URL)
 	if err != nil {
 		glog.Error("请求错误", err)
-		<-c
 		return
 	}
 	defer resp.Body.Close()
@@ -93,28 +94,26 @@ func dowAndUploadToOss(f *common.FileWithURL, c chan int) {
 	bucket, err := ossClinet.Bucket(bucketName)
 	if err != nil {
 		glog.Error("bucket创建失败“：", err)
-		<-c
 		return
 	}
 	err = bucket.PutObject(f.Name, resp.Body)
 	if err != nil {
 		glog.Error("上传错误：", err)
-		<-c
 		return
 	}
-	<-c
 }
 
 // dowWihtGenGifAndUploadToOss 下载然后生成gif再上传到oss
 func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
+	defer func(i chan int) {
+		<-i
+	}(c)
 	if f.URL == "uploaded" {
-		<-c
 		return
 	}
 	resp, err := HTTPClient.Get(f.URL)
 	if err != nil {
 		glog.Error("请求错误", err)
-		<-c
 		return
 	}
 	defer resp.Body.Close()
@@ -138,15 +137,12 @@ func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 	bucket, err := ossClinet.Bucket(bucketName)
 	if err != nil {
 		glog.Error("bucket创建失败“：", err)
-		<-c
 		return
 	}
 	err = bucket.PutObject(f.Name, b)
 
 	if err != nil {
 		glog.Error("上传错误：", err)
-		<-c
 		return
 	}
-	<-c
 }
