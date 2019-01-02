@@ -1,5 +1,5 @@
 bot:
-  token: 547660245:AAGxdiKzT6TBJm6dXYNrqIErltBYSImunck
+  token: 749671473:AAHZwGMVg_oWO_o_QRZNWyGS7fZyGasnVms
   webHookURL: https://tg.onemoresec.com/1231hkjha871rjahdSDEDKk1d12bhas
 redis:
   server: 127.0.0.1:6379
