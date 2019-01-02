@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/draw"
 	"image/gif"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"tg_gif/common"
@@ -116,8 +117,13 @@ func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 		return
 	}
 	defer resp.Body.Close()
+	RGBAData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		glog.Error("读取错误", err)
+		return
+	}
 
-	img, err := webp.Decode(resp.Body)
+	img, err := webp.DecodeRGBA(RGBAData)
 	if err != nil {
 		log.Println(err)
 	}
