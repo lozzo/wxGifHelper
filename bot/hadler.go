@@ -86,6 +86,7 @@ func commndHandler(m *Msg, userMsgStatus *common.MsgStatus) {
 	}
 	switch command {
 	case "/start":
+		SendImage(m.Message, wxAppQR)
 		SendText(m.Message, fmt.Sprintf(helpStr, m.Message.From.ID))
 		model.NewTgUser(m.Message.From.ID)
 	case "/send":
