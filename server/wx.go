@@ -96,7 +96,7 @@ func GetMyGifs(c *gin.Context) {
 
 // GetRandGifs 获取随机的表情
 func GetRandGifs(c *gin.Context) {
-	gifs := model.GetRandGifs(660)
+	gifs := model.GetRandGifs(201)
 	c.JSON(200, gin.H{
 		"gifs": gifs,
 	})
