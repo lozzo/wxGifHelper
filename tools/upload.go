@@ -134,8 +134,6 @@ func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 	paletted := image.NewPaletted(img.Bounds(), myTransparentPalette)
 	draw.FloydSteinberg.Draw(paletted, img.Bounds(), img, image.ZP)
 	anim.Image = append(anim.Image, paletted)
-	anim.Image = append(anim.Image, paletted)
-	anim.Delay = append(anim.Delay, 15)
 	anim.Delay = append(anim.Delay, 15)
 	gif.EncodeAll(b, &anim)
 
