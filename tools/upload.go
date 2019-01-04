@@ -3,10 +3,11 @@ package tools
 import (
 	"bytes"
 	"image"
+	"image/color"
+	"image/color/palette"
 	"image/draw"
 	"image/gif"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"tg_gif/common"
 	"time"
@@ -122,16 +123,39 @@ func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 		glog.Error("读取错误", err)
 		return
 	}
+	w, h, hasAlpha, err := webp.GetInfo(RGBAData)
+	if err != nil {
+		glog.Error("获取RGBA信息错误", err)
+		return
+	}
 
 	img, err := webp.DecodeRGBA(RGBAData)
 	if err != nil {
-		log.Println(err)
+		glog.Error("DecodeRGBA错误", err)
+		return
+	}
+
+	if hasAlpha {
+		for x := 0; x < w; x++ {
+			for y := 0; y < h; y++ {
+				cr := img.RGBAAt(x, y).R
+				cg := img.RGBAAt(x, y).G
+				cb := img.RGBAAt(x, y).B
+				ca := img.RGBAAt(x, y).A
+				if ca > 0x00 {
+					img.Set(x, y, color.RGBA{cr, cg, cb, 255})
+				} else {
+					img.Set(x, y, color.Transparent)
+				}
+			}
+		}
 	}
 
 	b := bytes.NewBuffer(make([]byte, 0))
+	palette := append(palette.WebSafe, color.Transparent)
 
 	anim := gif.GIF{}
-	paletted := image.NewPaletted(img.Bounds(), myTransparentPalette)
+	paletted := image.NewPaletted(img.Bounds(), palette)
 	draw.FloydSteinberg.Draw(paletted, img.Bounds(), img, image.ZP)
 	anim.Image = append(anim.Image, paletted)
 	anim.Delay = append(anim.Delay, 15)
