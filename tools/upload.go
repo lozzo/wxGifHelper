@@ -142,7 +142,7 @@ func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 				cg := img.RGBAAt(x, y).G
 				cb := img.RGBAAt(x, y).B
 				ca := img.RGBAAt(x, y).A
-				if ca > 0x00 {
+				if ca > 0x80 { // 这个中间值为啥呢？
 					img.Set(x, y, color.RGBA{cr, cg, cb, 255})
 				} else {
 					img.Set(x, y, color.Transparent)
