@@ -43,6 +43,7 @@ type Msg struct {
 }
 
 func (m *Msg) Handler() {
+	glog.V(5).Info(m)
 	userMsgStatus := GetUserMsgStatus(m.Message.From.ID)
 	if m.Message.Entities != nil {
 		x := *m.Message.Entities
