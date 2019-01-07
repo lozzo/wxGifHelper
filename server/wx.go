@@ -102,3 +102,16 @@ func GetRandGifs(c *gin.Context) {
 	})
 	return
 }
+
+// ReportGifs 举报有问题的图片
+// 参数?id=CAADBQADVQIAAiix4w0FzkQef-eN5QI
+func ReportGifs(c *gin.Context) {
+	FileID := c.DefaultQuery("id", "0")
+	if FileID == "0" {
+		c.AbortWithStatus(400)
+		return
+	}
+	model.ReportGifs(FileID)
+	c.Status(200)
+	return
+}
