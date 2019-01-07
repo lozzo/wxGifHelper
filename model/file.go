@@ -228,3 +228,16 @@ func ReportGifs(id string) {
 		panic("数据库错误")
 	}
 }
+
+func DeleteUserFile(id string, uid string) {
+	SQL := "DELETE FROM gifs WHERE FileID= ? and UserID = ?"
+	stmt, err := db.Prepare(SQL)
+	if err != nil {
+		glog.Error(err)
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(id, uid)
+	if err != nil {
+		glog.Error(err)
+	}
+}
