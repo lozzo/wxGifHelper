@@ -35,6 +35,13 @@ func baseHandler(c *gin.Context) {
 	err := json.Unmarshal(x, &msg)
 	if err != nil {
 		glog.V(5).Info("bind err:", err)
+		c.AbortWithStatus(200)
+		return
+	}
+	if msg.Message == nil {
+		glog.Error("消息错误")
+		c.AbortWithStatus(200)
+		return
 	}
 	msg.Handler()
 }

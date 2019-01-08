@@ -96,9 +96,40 @@ func GetMyGifs(c *gin.Context) {
 
 // GetRandGifs 获取随机的表情
 func GetRandGifs(c *gin.Context) {
-	gifs := model.GetRandGifs(660)
+	gifs := model.GetRandGifs(201)
 	c.JSON(200, gin.H{
 		"gifs": gifs,
 	})
+	return
+}
+
+// ReportGifs 举报有问题的图片
+// 参数?id=CAADBQADVQIAAiix4w0FzkQef-eN5QI
+func ReportGifs(c *gin.Context) {
+	FileID := c.DefaultQuery("id", "0")
+	if FileID == "0" {
+		c.AbortWithStatus(400)
+		return
+	}
+	model.ReportGifs(FileID)
+	c.Status(200)
+	return
+}
+
+// DeleteUserFile 删除用户文件
+// 参数?id=CAADBQADVQIAAiix4w0FzkQef-eN5QI&ask=11
+func DeleteUserFile(c *gin.Context) {
+	FileID := c.DefaultQuery("id", "0")
+	if FileID == "0" {
+		c.AbortWithStatus(400)
+		return
+	}
+	uid := c.DefaultQuery("ask", "0")
+	if uid == "0" {
+		c.AbortWithStatus(400)
+		return
+	}
+	model.DeleteUserFile(FileID, uid)
+	c.Status(200)
 	return
 }
