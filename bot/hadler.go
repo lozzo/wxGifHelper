@@ -16,18 +16,18 @@ var (
 
 			可用命令包括以下：
 
-			/send       开始发送表情包
+			/send        开始发送表情包
 			/stop        结束发送/start状态结束，此时后台才才会开始下载表情包并上传到oss，小程序内更新可能会有一定延迟，上传结束后会有Tg通知
 			/bind_wx     绑定微信帐号，也可以在微信程序内绑定TG帐号
 			/un_bind_wx  解除TG帐号和微信帐号的绑定，解除绑定后已上传的表情依然可以在小程序查看
 			
 			希望使用开心
 			`
-	bindWxStr      = "绑定微信,请在微信小程序设置页面绑定：%d ID,扫描二维码或者搜索小程序:wxGifHelper"
+	bindWxStr      = "绑定微信,请在微信小程序设置页面绑定：%d ID,扫描二维码或者搜索小程序:表情转发助手"
 	bindWxErrStr   = "你已绑定微信，微信昵称：%s，请勿重复绑定，或者解除绑定后重新绑定"
 	unbindWxStr    = "当前绑定微信昵称：%s（昵称更新可能有有延迟），解除绑定后仍可以查看已发送的表情。"
 	unbindWxErrStr = "你尚未绑定微信"
-	startSendStr   = "请开始发送表情，结束发送后请输入结束命令：/stop 本次发送状态保持时长为4小时，发送新表情重新计算时长，超过时长自动结束"
+	startSendStr   = "请开始发送表情，请勿发送在微信上不合适宜的表情，谢谢！结束发送后请输入结束命令：/stop 本次发送状态保持时长为4小时，超过时长自动结束"
 	commandErrStr  = "当前状态不可接受 %s 命令。可接受命令为 %s"
 	notBindWxStr   = "当前尚未绑定微信，无法使用，请在小程序设置页面绑定Telegram ID:%d"
 	wxAppQR        = "AgADBQADZagxG86AYFXmw__s7uQTQXtM9jIABGptsnsGFgNgNjkAAgI" // 微信小程序app二维码
