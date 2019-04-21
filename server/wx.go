@@ -133,3 +133,21 @@ func DeleteUserFile(c *gin.Context) {
 	c.Status(200)
 	return
 }
+
+// SetToMyGifs 添加到我喜欢的gifs内
+// 参数?id=CAADBQADVQIAAiix4w0FzkQef-eN5QI&ask=11
+func SetToMyGifs(c *gin.Context) {
+	FileID := c.DefaultQuery("id", "0")
+	if FileID == "0" {
+		c.AbortWithStatus(400)
+		return
+	}
+	uid := c.DefaultQuery("ask", "0")
+	if uid == "0" {
+		c.AbortWithStatus(400)
+		return
+	}
+	model.AddFilesFromWx(FileID, uid)
+	c.Status(200)
+	return
+}

@@ -8,4 +8,5 @@ func wxURL() {
 	wx.GET("/DeleteUserFile", JWTAuth(), DeleteUserFile)
 	wx.GET("/rand", GetRandGifs)
 	wx.GET("/report", ReportGifs)
+	wx.GET("/like", JWTAuth(), SetToMyGifs)
 }

@@ -230,7 +230,21 @@ func ReportGifs(id string) {
 }
 
 func DeleteUserFile(id string, uid string) {
-	SQL := "DELETE FROM gifs WHERE FileID= ? and UserID = ?"
+	SQL := "DELETE FROM gifs WHERE FileID= ? and UserID = ( SELECT id FROM users WHERE wxUserID = ? LIMIT 1)"
+	stmt, err := db.Prepare(SQL)
+	if err != nil {
+		glog.Error(err)
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(id, uid)
+	if err != nil {
+		glog.Error(err)
+	}
+}
+
+// AddFilesFromWx 添加到自己的下面
+func AddFilesFromWx(id string, uid string) {
+	SQL := "INSERT INTO gifs (FileID,UserID) VALUES (?,( SELECT id FROM users WHERE wxUserID = ? LIMIT 1))"
 	stmt, err := db.Prepare(SQL)
 	if err != nil {
 		glog.Error(err)
