@@ -255,3 +255,18 @@ func AddFilesFromWx(id string, uid string) {
 		glog.Error(err)
 	}
 }
+
+// AddFilesFromUser 添加到自己的下面
+func AddFilesFromUser(id string, uid string) {
+	SQL := "INSERT INTO gifs (FileID,UserID) VALUES (?,?)"
+	stmt, err := db.Prepare(SQL)
+	if err != nil {
+		glog.Error(err)
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(id, uid)
+	if err != nil {
+		glog.Error(err)
+	}
+}
+

@@ -3,6 +3,7 @@ package server
 import (
 	"strconv"
 	"tg_gif/model"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/glog"
@@ -142,12 +143,14 @@ func SetToMyGifs(c *gin.Context) {
 		c.AbortWithStatus(400)
 		return
 	}
+	glog.Info()
 	uid := c.DefaultQuery("ask", "0")
 	if uid == "0" {
 		c.AbortWithStatus(400)
 		return
 	}
-	model.AddFilesFromWx(FileID, uid)
+	fmt.Println(FileID, uid)
+	model.AddFilesFromUser(FileID, uid)
 	c.Status(200)
 	return
 }
