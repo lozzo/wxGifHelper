@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"unicode/utf8"
 )
 
 // MsgStatus 当前消息状态
@@ -97,4 +98,18 @@ func (m *MsgStatus) JSON() []byte {
 	}
 	return x
 
+}
+
+// FilterEmoji 处理昵称中包含的不能处理的emoji表情的方法
+// https://www.jianshu.com/p/bff9138d9ae0
+// 去除其中的emoji
+func FilterEmoji(content string) string { 
+	newContent := "" 
+	for _, value := range content { 
+		_, size := utf8.DecodeRuneInString(string(value))
+		if size <= 3 { 
+			newContent += string(value) 
+			} 
+		}
+	return newContent 
 }

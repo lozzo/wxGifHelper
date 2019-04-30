@@ -270,3 +270,16 @@ func AddFilesFromUser(id string, uid string) {
 	}
 }
 
+
+func EmojiInsertTest(emoji  string){
+	SQL := "INSERT INTO gifGroups (name) VALUES (?)"
+	stmt, err := db.Prepare(SQL)
+	if err != nil {
+		glog.Error(err)
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(emoji)
+	if err != nil {
+		glog.Error(err)
+	}
+}

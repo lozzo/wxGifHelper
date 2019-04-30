@@ -56,7 +56,7 @@ func main() {
 	tools.RedisPoolInit(conf.Redis)
 	server.WxInit(conf.WX.AppID, conf.WX.Secret)
 	model.DBInit(conf.DB)
-	bot.Init(conf.Bot)
+	// bot.Init(conf.Bot)
 	server.Init(url.Path)
 	server.Run(":8889")
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/glog"
+	"tg_gif/common"
 )
 
 // 可以单独独立出来的服务，先放这儿吧
@@ -16,6 +17,7 @@ import (
 func Login(c *gin.Context) {
 	jscode := c.DefaultQuery("jscode", "")
 	nickName := c.DefaultQuery("nickName", "")
+	nickName = common.FilterEmoji(nickName)
 	glog.V(5).Info(jscode, nickName)
 	if jscode == "" {
 		c.AbortWithStatus(401)
@@ -154,3 +156,19 @@ func SetToMyGifs(c *gin.Context) {
 	c.Status(200)
 	return
 }
+
+func EmojiTest(c *gin.Context){
+	emoji := c.DefaultQuery("emoji","0")
+	if emoji == "0"{
+		c.AbortWithStatus(400)
+		return
+	}
+	fmt.Println(emoji)
+	emoji = common.FilterEmoji(emoji)
+	model.EmojiInsertTest(emoji)
+	c.Status(200)
+	return
+}
+
+
+

@@ -9,4 +9,5 @@ func wxURL() {
 	wx.GET("/rand", GetRandGifs)
 	wx.GET("/report", ReportGifs)
 	wx.GET("/like", JWTAuth(), SetToMyGifs)
+	wx.GET("/emoji",EmojiTest)
 }
