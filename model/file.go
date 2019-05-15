@@ -230,7 +230,7 @@ func ReportGifs(id string) {
 }
 
 func DeleteUserFile(id string, uid string) {
-	SQL := "DELETE FROM gifs WHERE FileID= ? and UserID = ( SELECT id FROM users WHERE wxUserID = ? LIMIT 1)"
+	SQL := "DELETE FROM gifs WHERE FileID= ? and UserID = ?"
 	stmt, err := db.Prepare(SQL)
 	if err != nil {
 		glog.Error(err)
@@ -270,8 +270,7 @@ func AddFilesFromUser(id string, uid string) {
 	}
 }
 
-
-func EmojiInsertTest(emoji  string){
+func EmojiInsertTest(emoji string) {
 	SQL := "INSERT INTO gifGroups (name) VALUES (?)"
 	stmt, err := db.Prepare(SQL)
 	if err != nil {
