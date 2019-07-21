@@ -45,13 +45,13 @@ func CreatToken(user string) string {
 }
 
 // VerifiJwtToken 验证jwt_token 并返回该token的openid名称
-func VerifiJwtToken(tonkenString string) (string, bool) {
+func VerifiJwtToken(tokenString string) (string, bool) {
 	var user string
-	myToken, err := jwt.Parse(tonkenString, func(token *jwt.Token) (interface{}, error) {
+	myToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(jwtSectetKey), nil
 	})
 	if err != nil {
-		glog.Info("JWTAuth :Parse faild ", err)
+		glog.Info("JWTAuth :Parse fail ", err)
 		return "", false
 	}
 

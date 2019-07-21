@@ -63,7 +63,7 @@ func (m *MsgStatus) IsCmdAllowed(cmd string) ([]string, bool) {
 		return noStatus, true
 	}
 	for _, x := range allCmd {
-		a = (a || (x == cmd))
+		a = a || (x == cmd)
 	}
 	if !a {
 		return noStatus, a

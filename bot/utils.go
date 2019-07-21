@@ -92,6 +92,7 @@ func getFiles() {
 		cache.AddUploadedID(i.ID)
 		files = append(files, &file)
 	}
+	// todo 这儿应该是要将上传和写数据库放在同一个事物内进行,但是这儿没有,后面需要修复
 	tools.DowAndUploadToOss(files, 10)
 	model.AddFilesFromTg(m)
 	str := fmt.Sprintf("%d个表情发送成功上传成功，请在微信小程序上查看", len(m.File))

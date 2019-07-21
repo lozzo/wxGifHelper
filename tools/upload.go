@@ -72,40 +72,13 @@ func DowAndUploadToOss(files []*common.FileWithURL, count int) {
 	for i, file := range files {
 		glog.V(5).Info(file)
 		goroutineCount <- i
-		go dowWihtGenGifAndUploadToOss(file, goroutineCount)
+		go dowWithGenGifAndUploadToOss(file, goroutineCount)
 	}
 
 }
 
-// dowAndUploadToOss 直接上传webp到oss --废弃
-func dowAndUploadToOss(f *common.FileWithURL, c chan int) {
-	defer func(i chan int) {
-		<-i
-	}(c)
-	if f.URL == "uploaded" {
-		return
-	}
-	resp, err := HTTPClient.Get(f.URL)
-	if err != nil {
-		glog.Error("请求错误", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	bucket, err := ossClinet.Bucket(bucketName)
-	if err != nil {
-		glog.Error("bucket创建失败“：", err)
-		return
-	}
-	err = bucket.PutObject(f.Name, resp.Body)
-	if err != nil {
-		glog.Error("上传错误：", err)
-		return
-	}
-}
-
-// dowWihtGenGifAndUploadToOss 下载然后生成gif再上传到oss
-func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
+// dowWithGenGifAndUploadToOss 下载然后生成gif再上传到oss
+func dowWithGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 	defer func(i chan int) {
 		<-i
 	}(c)
@@ -152,24 +125,46 @@ func dowWihtGenGifAndUploadToOss(f *common.FileWithURL, c chan int) {
 	}
 
 	b := bytes.NewBuffer(make([]byte, 0))
-	palette := append(palette.WebSafe, color.Transparent)
+	palettes := append(palette.WebSafe, color.Transparent)
 
 	anim := gif.GIF{}
-	paletted := image.NewPaletted(img.Bounds(), palette)
+	paletted := image.NewPaletted(img.Bounds(), palettes)
 	draw.FloydSteinberg.Draw(paletted, img.Bounds(), img, image.ZP)
 	anim.Image = append(anim.Image, paletted)
 	anim.Delay = append(anim.Delay, 15)
 	gif.EncodeAll(b, &anim)
 
-	bucket, err := ossClinet.Bucket(bucketName)
-	if err != nil {
-		glog.Error("bucket创建失败“：", err)
-		return
-	}
-	err = bucket.PutObject(f.Name, b)
+	err = retry(5, time.Millisecond*50, func() error {
+		bucket, err := ossClinet.Bucket(bucketName)
+		if err != nil {
+			return err
+		}
+		return bucket.PutObject(f.Name, b)
+	})
 
 	if err != nil {
-		glog.Error("上传错误：", err)
+		glog.Error("5次重试后上传错误：", err)
 		return
 	}
+}
+
+// https://upgear.io/blog/simple-golang-retry-function/
+func retry(attempts int, sleep time.Duration, fn func() error) error {
+	if err := fn(); err != nil {
+		if s, ok := err.(stop); ok {
+			// Return the original error for later checking
+			return s.error
+		}
+
+		if attempts--; attempts > 0 {
+			time.Sleep(sleep)
+			return retry(attempts, 2*sleep, fn)
+		}
+		return err
+	}
+	return nil
+}
+
+type stop struct {
+	error
 }
